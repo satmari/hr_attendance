@@ -1,0 +1,124 @@
+{% extends "import_excel/base.html" %}
+
+{% block title %}{{ page_title }} Report{% endblock %}
+
+{% block content %}
+<section class="card">
+    <p class="eyebrow">Report</p>
+    <h1>{{ page_title }} Report</h1>
+
+    {% if periods %}
+    <div class="period-chip-list" style="margin-top: 16px;">
+        {% for period in periods %}
+            <a href="?month={{ period.month }}&year={{ period.year }}"
+               class="period-chip {% if period.month == selected_month and period.year == selected_year %}active{% endif %}">
+                {{ period.month }}/{{ period.year }}
+            </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="muted" style="margin-top: 12px;">No imported periods. Please import an Excel file first.</p>
+    {% endif %}
+</section>
+
+{% if report %}
+<section class="card">
+    <h2>{{ report.title }}</h2>
+
+    {% if report.summary_mode %}
+    {# --- Summary table (TO, Actual vs Budget) --- #}
+    <div class="table-wrap" style="overflow-x:auto;">
+        <table style="min-width:420px;">
+            <thead>
+                <tr>
+                    <th style="min-width:180px;"></th>
+                    {% for col in report.summary_columns %}
+                        <th style="text-align:center;min-width:110px;">{{ col }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for section in report.sections %}
+                    <tr>
+                        <td colspan="99" style="background:rgba(127,79,42,0.07);font-weight:700;padding:10px 14px;font-size:0.88rem;letter-spacing:0.03em;">
+                            {{ section.title }}
+                        </td>
+                    </tr>
+                    {% for row in section.rows %}
+                        <tr {% if row.kind == "total" %}style="font-weight:700;background:rgba(127,79,42,0.04);"{% endif %}>
+                            <td style="font-weight:600;">{{ row.label }}</td>
+                            {% for value in row.values %}
+                                <td style="text-align:center;">{{ value }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+    {# --- Daily matrix table (PC, ABS, ABS SE) --- #}
+    <div class="report-table-wrap">
+        <table class="report-matrix">
+            <thead>
+                <tr>
+                    <th class="sticky-col"></th>
+                    {% for header in report.headers %}
+                        <th class="{% if not header.exists %}nonexist-col{% elif header.weekday == 'SAT' or header.weekday == 'SUN' %}weekend-col{% endif %}">
+                            {% if header.exists %}{{ header.day }}<br><small>{{ header.weekday }}</small>{% endif %}
+                        </th>
+                    {% endfor %}
+                    {% if report.extra_headers %}
+                        {% for eh in report.extra_headers %}
+                            <th class="extra-col">{{ eh }}</th>
+                        {% endfor %}
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for section in report.sections %}
+                    <tr>
+                        <td colspan="99" class="sticky-col"
+                            style="background:rgba(127,79,42,0.07);font-weight:700;padding:10px 14px;font-size:0.88rem;letter-spacing:0.03em;position:static;">
+                            {{ section.title }}
+                        </td>
+                    </tr>
+                    {% for row in section.rows %}
+                        <tr class="{% if row.kind == 'total' %}report-row-total{% elif row.kind == 'percent' %}report-row-percent{% endif %}">
+                            <td class="sticky-col">{{ row.label }}</td>
+                            {% for value in row.values %}
+                                <td>{{ value }}</td>
+                            {% endfor %}
+                            {% if report.extra_headers %}
+                                {% if row.extra_values %}
+                                    {% for ev in row.extra_values %}
+                                        <td class="extra-col">{{ ev }}</td>
+                                    {% endfor %}
+                                {% else %}
+                                    {% for eh in report.extra_headers %}
+                                        <td class="extra-col"></td>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+</section>
+
+{% elif selected_month and selected_year %}
+<section class="card">
+    <p class="muted">No data for period {{ selected_month }}/{{ selected_year }}. Check that the import has completed.</p>
+</section>
+
+{% else %}
+<section class="card">
+    <p class="muted">Select a period by clicking a chip above.</p>
+</section>
+{% endif %}
+{% endblock %}

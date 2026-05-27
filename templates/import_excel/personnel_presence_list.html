@@ -1,0 +1,79 @@
+{% extends "import_excel/base.html" %}
+
+{% block title %}Personnel | HR Attendance{% endblock %}
+
+{% block content %}
+<section class="card">
+    <p class="eyebrow">Personnel view</p>
+    <h1>Personnel Records</h1>
+    <form class="filter-grid" method="get">
+        <label>
+            <span>Month</span>
+            <input type="number" name="month" min="1" max="12" value="{{ filters.month }}">
+        </label>
+        <label>
+            <span>Year</span>
+            <input type="number" name="year" min="2000" max="2100" value="{{ filters.year }}">
+        </label>
+        <label class="wide">
+            <span>Search by code or name</span>
+            <input type="text" name="search" value="{{ filters.search }}">
+        </label>
+        <button class="button button-primary" type="submit">Apply filters</button>
+    </form>
+    <p class="muted">Showing {{ record_count }} records. Display is limited to the first 250 for readability.</p>
+</section>
+
+<section class="card">
+    <p class="eyebrow">Quick periods</p>
+    <h2>Filter by month</h2>
+    <div class="period-chip-list">
+        <a class="period-chip {% if not filters.month and not filters.year %}active{% endif %}" href="{% url 'personnel_presence_list' %}{% if filters.search %}?search={{ filters.search|urlencode }}{% endif %}">
+            All periods
+        </a>
+        {% for period in periods %}
+            <a
+                class="period-chip {% if filters.month == period.month|stringformat:'s' and filters.year == period.year|stringformat:'s' %}active{% endif %}"
+                href="{% url 'personnel_presence_list' %}?month={{ period.month }}&year={{ period.year }}{% if filters.search %}&search={{ filters.search|urlencode }}{% endif %}"
+            >
+                {{ period.year }}/{{ period.month|stringformat:"02d" }}
+            </a>
+        {% empty %}
+            <span class="muted">No imported periods yet.</span>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Location</th>
+                    <th>Period</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in records %}
+                    <tr>
+                        <td>{{ item.employee_code }}</td>
+                        <td>{{ item.employee_name }}</td>
+                        <td>{{ item.current_department }}</td>
+                        <td>{{ item.current_location }}</td>
+                        <td>{{ item.year }}/{{ item.month|stringformat:"02d" }}</td>
+                        <td><a class="button-link" href="{% url 'personnel_presence_edit' item.pk %}">Edit</a></td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6">No results for the selected filters.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

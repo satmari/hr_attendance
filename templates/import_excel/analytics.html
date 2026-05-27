@@ -1,0 +1,190 @@
+{% extends "import_excel/base.html" %}
+
+{% block title %}Analytics | HR Attendance{% endblock %}
+
+{% block content %}
+<section class="card">
+    <p class="eyebrow">Reports</p>
+    <h1>Analytics</h1>
+
+    {% if not analytics_data %}
+        <p class="muted">No data available. Import Excel files to view analytics.</p>
+    {% else %}
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+        <script>
+        const analyticsData = {{ analytics_data_json|safe }};
+        </script>
+
+        <div class="charts-grid">
+            <!-- ABS% Trend -->
+            <div class="card chart-card">
+                <p class="eyebrow">Absenteeism</p>
+                <h2>ABS% Trend</h2>
+                <div class="chart-wrap">
+                    <canvas id="chartAbs"></canvas>
+                </div>
+            </div>
+
+            <!-- PC avg -->
+            <div class="card chart-card">
+                <p class="eyebrow">Present count</p>
+                <h2>PC (Present avg)</h2>
+                <div class="chart-wrap">
+                    <canvas id="chartPc"></canvas>
+                </div>
+            </div>
+
+            <!-- T/O Rate -->
+            <div class="card chart-card">
+                <p class="eyebrow">Turnover</p>
+                <h2>T/O Rate</h2>
+                <div class="chart-wrap">
+                    <canvas id="chartTo"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Month comparison table -->
+        <div class="card">
+            <p class="eyebrow">Month comparison</p>
+            <h2>Period Summary</h2>
+            <div class="table-wrap">
+                <table class="analytics-comparison-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Period</th>
+                            <th colspan="5" style="text-align:center;border-left:2px solid rgba(98,66,34,0.15);">ABS %</th>
+                            <th colspan="4" style="text-align:center;border-left:2px solid rgba(98,66,34,0.15);">PC avg</th>
+                            <th colspan="4" style="text-align:center;border-left:2px solid rgba(98,66,34,0.15);">T/O %</th>
+                        </tr>
+                        <tr>
+                            <th style="border-left:2px solid rgba(98,66,34,0.15);">SUB</th>
+                            <th>KIK</th>
+                            <th>SEN</th>
+                            <th style="background:rgba(200,240,200,0.2);">SEN w/o KI</th>
+                            <th>TOT</th>
+                            <th style="border-left:2px solid rgba(98,66,34,0.15);">SUB</th>
+                            <th>KIK</th>
+                            <th>SEN</th>
+                            <th>TOT</th>
+                            <th style="border-left:2px solid rgba(98,66,34,0.15);">SUB</th>
+                            <th>KIK</th>
+                            <th>SEN</th>
+                            <th>TOT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in analytics_data.comparison %}
+                        <tr>
+                            <td><strong>{{ row.label }}</strong></td>
+                            <td style="border-left:2px solid rgba(98,66,34,0.15);">{% if row.abs.SUB != None %}{{ row.abs.SUB|floatformat:2 }}%{% else %}-{% endif %}</td>
+                            <td>{% if row.abs.KIK != None %}{{ row.abs.KIK|floatformat:2 }}%{% else %}-{% endif %}</td>
+                            <td>{% if row.abs.SEN != None %}{{ row.abs.SEN|floatformat:2 }}%{% else %}-{% endif %}</td>
+                            <td style="background:rgba(200,240,200,0.1);">{% if row.abs.SEN_WOKI != None %}{{ row.abs.SEN_WOKI|floatformat:2 }}%{% else %}-{% endif %}</td>
+                            <td>{% if row.abs.TOTAL != None %}{{ row.abs.TOTAL|floatformat:2 }}%{% else %}-{% endif %}</td>
+                            <td style="border-left:2px solid rgba(98,66,34,0.15);">{% if row.pc.SUB != None %}{{ row.pc.SUB }}{% else %}-{% endif %}</td>
+                            <td>{% if row.pc.KIK != None %}{{ row.pc.KIK }}{% else %}-{% endif %}</td>
+                            <td>{% if row.pc.SEN != None %}{{ row.pc.SEN }}{% else %}-{% endif %}</td>
+                            <td>{% if row.pc.TOTAL != None %}{{ row.pc.TOTAL }}{% else %}-{% endif %}</td>
+                            <td style="border-left:2px solid rgba(98,66,34,0.15);">{% if row.to.SUB != None %}{{ row.to.SUB|floatformat:2 }}%{% else %}-{% endif %}</td>
+                            <td>{% if row.to.KIK != None %}{{ row.to.KIK|floatformat:2 }}%{% else %}-{% endif %}</td>
+                            <td>{% if row.to.SEN != None %}{{ row.to.SEN|floatformat:2 }}%{% else %}-{% endif %}</td>
+                            <td>{% if row.to.TOTAL != None %}{{ row.to.TOTAL|floatformat:2 }}%{% else %}-{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+        (function() {
+            const labels = analyticsData.labels;
+            const COLORS = {
+                SUB:      "rgba(127,79,42,0.85)",
+                KIK:      "rgba(210,120,50,0.85)",
+                SEN:      "rgba(45,122,63,0.85)",
+                SEN_WOKI: "rgba(45,122,63,0.45)",
+                TOTAL:    "rgba(80,80,100,0.85)",
+            };
+            const DASHES = {
+                SEN_WOKI: [6, 3],
+            };
+
+            function makeDatasets(metric, keys) {
+                return keys.map(function(site) {
+                    var ds = {
+                        label: site === "SEN_WOKI" ? "SEN w/o KI" : site,
+                        data: analyticsData[metric][site],
+                        borderColor: COLORS[site],
+                        backgroundColor: COLORS[site],
+                        spanGaps: false,
+                    };
+                    if (DASHES[site]) ds.borderDash = DASHES[site];
+                    return ds;
+                });
+            }
+
+            // ABS% line chart — includes SEN w/o KI as dashed line
+            new Chart(document.getElementById("chartAbs"), {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: makeDatasets("abs", ["SUB", "KIK", "SEN", "SEN_WOKI", "TOTAL"]),
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: "bottom" } },
+                    scales: {
+                        y: {
+                            title: { display: true, text: "ABS %" },
+                            ticks: { callback: function(v) { return v + "%"; } },
+                            grid: { display: true },
+                        }
+                    }
+                }
+            });
+
+            // PC avg bar chart
+            new Chart(document.getElementById("chartPc"), {
+                type: "bar",
+                data: {
+                    labels: labels,
+                    datasets: makeDatasets("pc", ["SUB", "KIK", "SEN", "TOTAL"]),
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: "bottom" } },
+                    scales: {
+                        y: {
+                            title: { display: true, text: "Avg daily present" },
+                            grid: { display: true },
+                        }
+                    }
+                }
+            });
+
+            // T/O Rate line chart
+            new Chart(document.getElementById("chartTo"), {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: makeDatasets("to", ["SUB", "KIK", "SEN", "TOTAL"]),
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: "bottom" } },
+                    scales: {
+                        y: {
+                            title: { display: true, text: "T/O %" },
+                            ticks: { callback: function(v) { return v + "%"; } },
+                            grid: { display: true },
+                        }
+                    }
+                }
+            });
+        })();
+        </script>
+    {% endif %}
+</section>
+{% endblock %}

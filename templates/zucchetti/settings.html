@@ -1,0 +1,73 @@
+{% extends "import_excel/base.html" %}
+{% block title %}Zucchetti – FTP Settings{% endblock %}
+{% block content %}
+<style>
+.zuc-card{max-width:480px;margin:40px auto;background:var(--surface,#1e1e2e);border:1px solid var(--border,#333);border-radius:10px;padding:36px 40px;}
+.zuc-card h1{font-size:1.3rem;margin:0 0 28px;color:var(--fg,#e0e0e0);}
+.zuc-field{margin-bottom:20px;}
+.zuc-field label{display:block;font-size:0.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted,#888);margin-bottom:6px;}
+.zuc-input{width:100%;box-sizing:border-box;background:var(--input-bg,#131320);border:1px solid var(--border,#333);border-radius:6px;padding:9px 12px;color:var(--fg,#e0e0e0);font-size:0.95rem;font-family:inherit;}
+.zuc-input:focus{outline:none;border-color:var(--accent,#7b68ee);}
+.zuc-row{display:flex;gap:16px;}
+.zuc-row .zuc-field{flex:1;}
+.zuc-static{font-size:0.9rem;color:var(--muted,#888);padding:9px 0;}
+.zuc-actions{margin-top:28px;display:flex;gap:12px;align-items:center;}
+.btn-save{padding:9px 28px;background:var(--accent,#7b68ee);color:#fff;border:none;border-radius:6px;font-size:0.95rem;cursor:pointer;font-family:inherit;}
+.btn-save:hover{opacity:.88;}
+.zuc-nav{display:flex;gap:20px;margin-bottom:32px;}
+.zuc-nav a{color:var(--muted,#888);text-decoration:none;font-size:0.9rem;padding:6px 0;border-bottom:2px solid transparent;}
+.zuc-nav a.active,
+.zuc-nav a:hover{color:var(--fg,#e0e0e0);border-bottom-color:var(--accent,#7b68ee);}
+</style>
+
+<div style="max-width:560px;margin:40px auto;">
+    <nav class="zuc-nav">
+        <a href="{% url 'zucchetti_settings' %}" class="active">FTP Settings</a>
+        <a href="{% url 'zucchetti_sync' %}">Data / Sync</a>
+    </nav>
+
+    <div class="zuc-card">
+        <h1>FTP Settings</h1>
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="zuc-row">
+                <div class="zuc-field">
+                    <label>File Protocol</label>
+                    <div class="zuc-static">FTP</div>
+                </div>
+                <div class="zuc-field">
+                    <label>Encryption</label>
+                    <div class="zuc-static">No encryption</div>
+                </div>
+            </div>
+
+            <div class="zuc-row">
+                <div class="zuc-field" style="flex:2;">
+                    <label>{{ form.host.label }}</label>
+                    {{ form.host }}
+                    {% if form.host.errors %}<div style="color:#e07070;font-size:0.8rem;margin-top:4px;">{{ form.host.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="zuc-field" style="flex:1;">
+                    <label>{{ form.port.label }}</label>
+                    {{ form.port }}
+                </div>
+            </div>
+
+            <div class="zuc-field">
+                <label>{{ form.username.label }}</label>
+                {{ form.username }}
+            </div>
+
+            <div class="zuc-field">
+                <label>{{ form.password.label }}</label>
+                {{ form.password }}
+            </div>
+
+            <div class="zuc-actions">
+                <button type="submit" class="btn-save">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

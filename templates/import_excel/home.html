@@ -1,0 +1,36 @@
+{% extends "import_excel/base.html" %}
+{% load group_tags %}
+
+{% block title %}Home | HR Attendance{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-copy card">
+        <p class="eyebrow">Internal HR workspace</p>
+        <h1>Monthly attendance import </h1>
+
+        {% if request.user|has_group:"hr_attendance" %}
+        <div class="action-row">
+            <a class="button button-primary" href="{% url 'import_center' %}">Import Excel</a>
+            <a class="button button-secondary" href="{% url 'personnel_presence_list' %}">Personnel Records</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="hero-status card">
+        <h2>Current focus</h2>
+        <ul class="stat-list">
+            <li>Import main sheet with automatic period detection</li>
+            <li>Monthly split into main + 6 child tables</li>
+            <li>Records view, filters and manual edit</li>
+        </ul>
+        {% if latest_import %}
+            <div class="status-chip">
+                Last import: {{ latest_import.original_file_name }} / {{ latest_import.month }}/{{ latest_import.year }}
+            </div>
+        {% else %}
+            <div class="status-chip">No import logs yet.</div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

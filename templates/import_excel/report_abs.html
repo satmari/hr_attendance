@@ -1,0 +1,87 @@
+{% extends "import_excel/base.html" %}
+
+{% block title %}Absenteeism Report{% endblock %}
+
+{% block content %}
+<section class="card">
+    <p class="eyebrow">Report</p>
+    <h1>Absenteeism Report</h1>
+
+    {% if periods %}
+    <div class="period-chip-list" style="margin-top: 16px;">
+        {% for period in periods %}
+            <a href="?month={{ period.month }}&year={{ period.year }}"
+               class="period-chip {% if period.month == selected_month and period.year == selected_year %}active{% endif %}">
+                {{ period.month }}/{{ period.year }}
+            </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="muted" style="margin-top: 12px;">No imported periods. Please import an Excel file first.</p>
+    {% endif %}
+</section>
+
+{% if report %}
+
+<style>
+.abs-tabs { display:flex; gap:4px; margin-bottom:-1px; }
+.abs-tab-btn {
+    padding: 8px 22px;
+    border: 1px solid var(--border, #ddd);
+    border-bottom: none;
+    background: var(--surface, #f5f5f5);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 6px 6px 0 0;
+    color: var(--muted, #888);
+}
+.abs-tab-btn.active {
+    background: #fff;
+    color: var(--text, #222);
+    border-bottom: 1px solid #fff;
+    margin-bottom: -1px;
+}
+.abs-tab-panel { display: none; }
+.abs-tab-panel.active { display: block; }
+</style>
+
+<section class="card">
+    <div class="abs-tabs">
+        <button class="abs-tab-btn active" onclick="absTab(event,'tab-main')">ABS% Total Active</button>
+        <button class="abs-tab-btn" onclick="absTab(event,'tab-detail')">Detail</button>
+    </div>
+
+    {% with tab=report.tab_main %}
+    <div id="tab-main" class="abs-tab-panel active">
+        {% include "import_excel/_abs_matrix.html" with sections=tab.sections extra_headers=tab.extra_headers headers=report.headers %}
+    </div>
+    {% endwith %}
+
+    {% with tab=report.tab_detail %}
+    <div id="tab-detail" class="abs-tab-panel">
+        {% include "import_excel/_abs_matrix.html" with sections=tab.sections extra_headers=tab.extra_headers headers=report.headers %}
+    </div>
+    {% endwith %}
+</section>
+
+<script>
+function absTab(e, id) {
+    document.querySelectorAll('.abs-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.abs-tab-panel').forEach(p => p.classList.remove('active'));
+    e.target.classList.add('active');
+    document.getElementById(id).classList.add('active');
+}
+</script>
+
+{% elif selected_month and selected_year %}
+<section class="card">
+    <p class="muted">No data for period {{ selected_month }}/{{ selected_year }}.</p>
+</section>
+{% else %}
+<section class="card">
+    <p class="muted">Select a period by clicking a chip above.</p>
+</section>
+{% endif %}
+{% endblock %}

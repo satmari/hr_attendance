@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ email_title|default:"HR Attendance Monthly Report" }} — {{ month_name }} {{ year }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f4f8;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f0f4f8;padding:32px 16px;">
+<tr><td align="center">
+
+  <!-- Main wrapper -->
+  <table width="620" cellpadding="0" cellspacing="0" border="0" style="max-width:620px;width:100%;">
+
+    <!-- ═══ HEADER ═══ -->
+    <tr>
+      <td style="background-color:#0f2744;border-radius:10px 10px 0 0;padding:36px 40px 28px;">
+        <p style="margin:0 0 6px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#7eb3e8;">Monthly Report</p>
+        <h1 style="margin:0 0 4px;font-size:28px;font-weight:700;color:#ffffff;line-height:1.2;">{{ email_title|default:"HR Attendance Monthly Report" }}</h1>
+        <p style="margin:0;font-size:18px;color:#93c5fd;font-weight:400;">{{ month_name }} {{ year }}</p>
+      </td>
+    </tr>
+
+    <!-- ═══ META BAR ═══ -->
+    <tr>
+      <td style="background-color:#1e3a5f;padding:10px 40px;">
+        <p style="margin:0;font-size:12px;color:#93c5fd;">
+          <span style="color:#ffffff;font-weight:600;">{{ records }}</span> personnel records in period
+          &nbsp;·&nbsp;
+          <span style="color:#cbd5e1;">Auto-generated report</span>
+        </p>
+      </td>
+    </tr>
+
+    <!-- ═══ BODY WRAPPER ═══ -->
+    <tr>
+      <td style="background-color:#ffffff;padding:0 0 8px;">
+
+        <!-- ─── PERSONNEL COUNT ─── -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="padding:28px 40px 4px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="border-left:4px solid #1d4ed8;padding:0 0 0 12px;">
+                    <p style="margin:0;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6b7280;">Section 1 of 6</p>
+                    <h2 style="margin:2px 0 0;font-size:17px;font-weight:700;color:#0f2744;">Personnel Count</h2>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:12px 40px 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;border-radius:6px;overflow:hidden;border:1px solid #e5e7eb;">
+                <tr style="background-color:#f8fafc;">
+                  <th style="text-align:left;padding:9px 14px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Site</th>
+                  <th style="text-align:right;padding:9px 14px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Monthly Average (PR.CADRE)</th>
+                </tr>
+                {% for row in pc %}
+                <tr style="{% if row.kind == 'total' %}background-color:#f0f7ff;{% elif forloop.counter|divisibleby:2 %}background-color:#fafafa;{% else %}background-color:#ffffff;{% endif %}">
+                  <td style="padding:9px 14px;font-size:13px;font-weight:{% if row.kind == 'total' %}700{% else %}400{% endif %};color:{% if row.kind == 'total' %}#0f2744{% else %}#374151{% endif %};border-bottom:1px solid #f1f5f9;">{{ row.label }}</td>
+                  <td style="padding:9px 14px;font-size:13px;font-weight:{% if row.kind == 'total' %}700{% else %}400{% endif %};text-align:right;color:#374151;border-bottom:1px solid #f1f5f9;">{{ row.avg }}</td>
+                </tr>
+                {% endfor %}
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <!-- ─── DIVIDER ─── -->
+        <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:0 40px;"><hr style="border:none;border-top:1px solid #f1f5f9;margin:0;"></td></tr></table>
+
+        <!-- ─── ABSENTEEISM ─── -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="padding:24px 40px 4px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-left:4px solid #7c3aed;padding:0 0 0 12px;">
+                    <p style="margin:0;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6b7280;">Section 2 of 6</p>
+                    <h2 style="margin:2px 0 0;font-size:17px;font-weight:700;color:#0f2744;">Absenteeism</h2>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:12px 40px 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;border:1px solid #e5e7eb;">
+                <tr style="background-color:#f8fafc;">
+                  <th style="text-align:left;padding:9px 14px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Site</th>
+                  <th style="text-align:right;padding:9px 14px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Avg ABS%</th>
+                </tr>
+                {% for row in abs %}
+                <tr style="{% if row.kind == 'total' %}background-color:#faf5ff;{% elif forloop.counter|divisibleby:2 %}background-color:#fafafa;{% else %}background-color:#ffffff;{% endif %}">
+                  <td style="padding:9px 14px;font-size:13px;font-weight:{% if row.kind == 'total' %}700{% else %}400{% endif %};color:{% if row.kind == 'total' %}#0f2744{% else %}#374151{% endif %};border-bottom:1px solid #f1f5f9;">{{ row.label }}</td>
+                  <td style="padding:9px 14px;font-size:13px;font-weight:700;text-align:right;color:{{ row.color }};border-bottom:1px solid #f1f5f9;">{{ row.avg }}</td>
+                </tr>
+                {% endfor %}
+              </table>
+              <p style="margin:8px 0 0;font-size:11px;color:#9ca3af;">
+                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background-color:#16a34a;"></span> ≤9%
+                &nbsp;
+                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background-color:#d97706;"></span> 9–11%
+                &nbsp;
+                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background-color:#dc2626;"></span> &gt;11%
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- ─── DIVIDER ─── -->
+        <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:0 40px;"><hr style="border:none;border-top:1px solid #f1f5f9;margin:0;"></td></tr></table>
+
+        <!-- ─── ABSENTEEISM SE WITHOUT KI ─── -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="padding:24px 40px 4px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-left:4px solid #0891b2;padding:0 0 0 12px;">
+                    <p style="margin:0;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6b7280;">Section 3 of 6</p>
+                    <h2 style="margin:2px 0 0;font-size:17px;font-weight:700;color:#0f2744;">Absenteeism SE without KI</h2>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:12px 40px 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;border:1px solid #e5e7eb;">
+                <tr style="background-color:#f8fafc;">
+                  <th style="text-align:left;padding:9px 14px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Site</th>
+                  <th style="text-align:right;padding:9px 14px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Avg ABS%</th>
+                </tr>
+                {% for row in abs_se %}
+                <tr style="{% if row.kind == 'total' %}background-color:#f0fdfe;{% elif forloop.counter|divisibleby:2 %}background-color:#fafafa;{% else %}background-color:#ffffff;{% endif %}">
+                  <td style="padding:9px 14px;font-size:13px;font-weight:{% if row.kind == 'total' %}700{% else %}400{% endif %};color:{% if row.kind == 'total' %}#0f2744{% else %}#374151{% endif %};border-bottom:1px solid #f1f5f9;">{{ row.label }}</td>
+                  <td style="padding:9px 14px;font-size:13px;font-weight:700;text-align:right;color:{{ row.color }};border-bottom:1px solid #f1f5f9;">{{ row.avg }}</td>
+                </tr>
+                {% endfor %}
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <!-- ─── DIVIDER ─── -->
+        <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:0 40px;"><hr style="border:none;border-top:1px solid #f1f5f9;margin:0;"></td></tr></table>
+
+        <!-- ─── TURNOVER ─── -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="padding:24px 40px 4px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-left:4px solid #dc2626;padding:0 0 0 12px;">
+                    <p style="margin:0;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6b7280;">Section 4 of 6</p>
+                    <h2 style="margin:2px 0 0;font-size:17px;font-weight:700;color:#0f2744;">Turnover</h2>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:12px 40px 24px;">
+              {% for section in turnover.sections %}
+              <p style="margin:0 0 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6b7280;">{{ section.title }}</p>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;border:1px solid #e5e7eb;margin-bottom:16px;">
+                <tr style="background-color:#f8fafc;">
+                  <th style="text-align:left;padding:8px 10px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Metric</th>
+                  {% for col in turnover.columns %}
+                  <th style="text-align:center;padding:8px 10px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">{{ col }}</th>
+                  {% endfor %}
+                </tr>
+                {% for row in section.rows %}
+                <tr style="{% if row.kind == 'total' %}background-color:#fff7f7;{% elif forloop.counter|divisibleby:2 %}background-color:#fafafa;{% else %}background-color:#ffffff;{% endif %}">
+                  <td style="padding:8px 10px;font-size:12px;font-weight:{% if row.kind == 'total' %}700{% else %}400{% endif %};color:{% if row.color %}{{ row.color }}{% elif row.kind == 'total' %}#0f2744{% else %}#374151{% endif %};border-bottom:1px solid #f1f5f9;white-space:nowrap;">{{ row.label }}</td>
+                  {% for val in row.values %}
+                  <td style="padding:8px 10px;font-size:12px;font-weight:{% if row.kind == 'total' %}700{% else %}400{% endif %};text-align:center;color:{% if row.color %}{{ row.color }}{% else %}#374151{% endif %};border-bottom:1px solid #f1f5f9;">{{ val }}</td>
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </table>
+              {% endfor %}
+            </td>
+          </tr>
+        </table>
+
+        <!-- ─── DIVIDER ─── -->
+        <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:0 40px;"><hr style="border:none;border-top:1px solid #f1f5f9;margin:0;"></td></tr></table>
+
+        <!-- ─── ABSENTEEISM COMPLETE ─── -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="padding:24px 40px 4px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-left:4px solid #059669;padding:0 0 0 12px;">
+                    <p style="margin:0;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6b7280;">Section 5 of 6</p>
+                    <h2 style="margin:2px 0 0;font-size:17px;font-weight:700;color:#0f2744;">Absenteeism Complete</h2>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:12px 40px 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;border:1px solid #e5e7eb;">
+                <tr style="background-color:#f8fafc;">
+                  <th style="text-align:left;padding:9px 10px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Site</th>
+                  <th style="text-align:center;padding:9px 10px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Avg Active</th>
+                  <th style="text-align:center;padding:9px 10px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Avg Present</th>
+                  <th style="text-align:center;padding:9px 10px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Avg Absent</th>
+                  <th style="text-align:center;padding:9px 10px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">ABS%</th>
+                </tr>
+                {% for site in abs_comp %}
+                <tr style="{% if site.name == 'GORDON TOTAL' %}background-color:#f0f7ff;{% elif forloop.counter|divisibleby:2 %}background-color:#fafafa;{% else %}background-color:#ffffff;{% endif %}">
+                  <td style="padding:9px 10px;font-size:13px;font-weight:{% if site.name == 'GORDON TOTAL' %}700{% else %}400{% endif %};color:{% if site.name == 'GORDON TOTAL' %}#0f2744{% else %}#374151{% endif %};border-bottom:1px solid #f1f5f9;">{{ site.name }}</td>
+                  <td style="padding:9px 10px;font-size:13px;text-align:center;color:#374151;border-bottom:1px solid #f1f5f9;">{{ site.active }}</td>
+                  <td style="padding:9px 10px;font-size:13px;text-align:center;color:#374151;border-bottom:1px solid #f1f5f9;">{{ site.present }}</td>
+                  <td style="padding:9px 10px;font-size:13px;text-align:center;color:#374151;border-bottom:1px solid #f1f5f9;">{{ site.not_present }}</td>
+                  <td style="padding:9px 10px;font-size:13px;font-weight:700;text-align:center;color:{{ site.color }};border-bottom:1px solid #f1f5f9;">{{ site.abs_pct }}</td>
+                </tr>
+                {% endfor %}
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <!-- ─── DIVIDER ─── -->
+        <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:0 40px;"><hr style="border:none;border-top:1px solid #f1f5f9;margin:0;"></td></tr></table>
+
+        <!-- ─── ACTUAL VS BUDGET ─── -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="padding:24px 40px 4px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-left:4px solid #f59e0b;padding:0 0 0 12px;">
+                    <p style="margin:0;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6b7280;">Section 6 of 6</p>
+                    <h2 style="margin:2px 0 0;font-size:17px;font-weight:700;color:#0f2744;">Actual vs Budget</h2>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:12px 40px 28px;">
+              {% if avb %}
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;border:1px solid #e5e7eb;margin-bottom:16px;">
+                <tr style="background-color:#f8fafc;">
+                  <th style="text-align:left;padding:9px 10px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Site</th>
+                  <th style="text-align:center;padding:9px 10px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Op.In Line<br>(current)</th>
+                  <th style="text-align:center;padding:9px 10px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Op.In Line<br>(previous)</th>
+                  <th style="text-align:center;padding:9px 10px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Δ Change</th>
+                  <th style="text-align:center;padding:9px 10px;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">vs Target</th>
+                </tr>
+                {% for site in avb.sites %}
+                <tr style="{% if forloop.counter|divisibleby:2 %}background-color:#fafafa;{% else %}background-color:#ffffff;{% endif %}">
+                  <td style="padding:9px 10px;font-size:13px;color:#374151;border-bottom:1px solid #f1f5f9;">{{ site.name }}</td>
+                  <td style="padding:9px 10px;font-size:13px;font-weight:600;text-align:center;color:#1e3a5f;border-bottom:1px solid #f1f5f9;">{{ site.logging_after }}</td>
+                  <td style="padding:9px 10px;font-size:13px;text-align:center;color:#6b7280;border-bottom:1px solid #f1f5f9;">{{ site.logging_before }}</td>
+                  <td style="padding:9px 10px;font-size:13px;font-weight:600;text-align:center;color:{% if site.delta > 0 %}#16a34a{% elif site.delta < 0 %}#dc2626{% else %}#6b7280{% endif %};border-bottom:1px solid #f1f5f9;">{{ site.direction }}{{ site.delta }}</td>
+                  <td style="padding:9px 10px;font-size:13px;font-weight:600;text-align:center;color:{% if site.actual_minus_target is not None %}{% if site.actual_minus_target >= 0 %}#16a34a{% else %}#dc2626{% endif %}{% else %}#9ca3af{% endif %};border-bottom:1px solid #f1f5f9;">{% if site.actual_minus_target is not None %}{% if site.actual_minus_target >= 0 %}+{% endif %}{{ site.actual_minus_target }}{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+                <!-- Gordon total row -->
+                <tr style="background-color:#f0f7ff;">
+                  <td style="padding:9px 10px;font-size:13px;font-weight:700;color:#0f2744;border-bottom:1px solid #e5e7eb;">GORDON TOTAL</td>
+                  <td style="padding:9px 10px;font-size:13px;font-weight:700;text-align:center;color:#0f2744;border-bottom:1px solid #e5e7eb;">{{ avb.gordon.logging_after }}</td>
+                  <td style="padding:9px 10px;font-size:13px;font-weight:700;text-align:center;color:#6b7280;border-bottom:1px solid #e5e7eb;">{{ avb.gordon.logging_before }}</td>
+                  <td style="padding:9px 10px;font-size:13px;font-weight:700;text-align:center;color:{% if avb.gordon.delta > 0 %}#16a34a{% elif avb.gordon.delta < 0 %}#dc2626{% else %}#6b7280{% endif %};border-bottom:1px solid #e5e7eb;">{{ avb.gordon.direction }}{{ avb.gordon.delta }}</td>
+                  <td style="padding:9px 10px;font-size:13px;font-weight:700;text-align:center;color:{% if avb.gordon.actual_minus_target is not None %}{% if avb.gordon.actual_minus_target >= 0 %}#16a34a{% else %}#dc2626{% endif %}{% else %}#9ca3af{% endif %};border-bottom:1px solid #e5e7eb;">{% if avb.gordon.actual_minus_target is not None %}{% if avb.gordon.actual_minus_target >= 0 %}+{% endif %}{{ avb.gordon.actual_minus_target }}{% else %}—{% endif %}</td>
+                </tr>
+              </table>
+              {% else %}
+              <p style="margin:0;font-size:13px;color:#9ca3af;font-style:italic;">No Actual vs Budget data available for this period.</p>
+              {% endif %}
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+
+    <!-- ═══ FULL REPORT LINK (Gordon intranet only) ═══ -->
+    {% if app_base_url %}
+    <tr>
+      <td style="background-color:#f0f7ff;border-top:2px solid #dbeafe;padding:28px 40px 32px;">
+
+        <!-- label -->
+        <p style="margin:0 0 18px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#1d4ed8;">Full Report — Online</p>
+
+        <!-- CTA button (table-based for email client compatibility) -->
+        <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+          <tr>
+            <td style="border-radius:6px;background-color:#1d4ed8;">
+              <a href="{{ app_base_url }}" target="_blank"
+                 style="display:inline-block;padding:12px 28px;color:#ffffff;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;letter-spacing:0.3px;">
+                Open HR Attendance Dashboard &rarr;
+              </a>
+            </td>
+          </tr>
+        </table>
+
+        <!-- individual report links -->
+        <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:18px;">
+          {% for link in report_links %}
+          <tr>
+            <td style="padding:3px 0;">
+              <a href="{{ link.url }}" target="_blank"
+                 style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#1d4ed8;text-decoration:none;">
+                &#8250; {{ link.label }}
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+
+        <!-- intranet notice -->
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr>
+            <td style="border-left:3px solid #93c5fd;padding:10px 14px;background-color:#eff6ff;border-radius:0 4px 4px 0;">
+              <p style="margin:0;font-size:11px;color:#1e40af;line-height:1.6;">
+                <strong>Intranet access only.</strong>
+                These links are accessible exclusively within the Gordon network.
+                If you are working remotely, please connect via VPN before opening them.
+              </p>
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+    {% endif %}
+
+    <!-- ═══ FOOTER ═══ -->
+    <tr>
+      <td style="background-color:#f8fafc;border-top:1px solid #e5e7eb;border-radius:0 0 10px 10px;padding:20px 40px;">
+        <p style="margin:0 0 4px;font-size:12px;color:#6b7280;">This report was generated automatically by <strong style="color:#374151;">HR Attendance</strong> application.</p>
+        <p style="margin:0;font-size:11px;color:#9ca3af;">Period: {{ month_name }} {{ year }} &nbsp;·&nbsp; Do not reply to this email.</p>
+        <p style="margin:8px 0 0;font-size:11px;color:#9ca3af;">Made by <strong style="color:#6b7280;">Gordon IT Team</strong></p>
+      </td>
+    </tr>
+
+  </table>
+</td></tr>
+</table>
+
+</body>
+</html>

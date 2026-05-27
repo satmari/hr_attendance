@@ -1,0 +1,134 @@
+{% extends "import_excel/base.html" %}
+
+{% block title %}Edit | HR Attendance{% endblock %}
+
+{% block content %}
+<section class="card edit-header">
+    <div>
+        <p class="eyebrow">Maintenance</p>
+        <h1>{{ presence.employee_name }} <span class="muted">({{ presence.employee_code }})</span></h1>
+        <p class="muted" style="margin:0;">Period: {{ presence.month }}/{{ presence.year }}</p>
+    </div>
+    <div class="action-row" style="margin-top:0;">
+        <button class="button button-primary" type="submit" form="edit-form">Save changes</button>
+        <a class="button button-secondary" href="{% url 'personnel_presence_list' %}">Back to list</a>
+    </div>
+</section>
+
+{% if messages %}
+<div class="flash-stack">
+    {% for message in messages %}
+        <div class="flash {{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<section class="card" style="padding-bottom:0;">
+    <div class="tab-bar">
+        <button type="button" class="tab-btn active" data-tab="main">Main</button>
+        <button type="button" class="tab-btn" data-tab="mat">MAT</button>
+        <button type="button" class="tab-btn" data-tab="department">Department</button>
+        <button type="button" class="tab-btn" data-tab="location">Location</button>
+        <button type="button" class="tab-btn" data-tab="shift">Shift</button>
+        <button type="button" class="tab-btn" data-tab="inteos">Inteos</button>
+        <button type="button" class="tab-btn" data-tab="zucchetti">Zucchetti</button>
+    </div>
+
+    <form id="edit-form" method="post">
+        {% csrf_token %}
+
+        <div class="tab-panel" data-panel="main">
+            <div class="form-grid" style="padding:24px 0;">
+                {% for field in main_form %}
+                    <label>
+                        <span>{{ field.label }}</span>
+                        {{ field }}
+                        {% if field.errors %}<small class="error-text">{{ field.errors|join:", " }}</small>{% endif %}
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="tab-panel" data-panel="mat" hidden>
+            {% if master_form.instance.pk %}
+            <div class="form-grid" style="padding:24px 0;">
+                {% for field in master_form %}
+                    <label>
+                        <span>{{ field.label }}</span>
+                        {{ field }}
+                        {% if field.errors %}<small class="error-text">{{ field.errors|join:", " }}</small>{% endif %}
+                    </label>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="muted" style="padding:24px 0;">No MAT data for this employee in this period.</p>
+            {% endif %}
+        </div>
+
+        <div class="tab-panel" data-panel="department" hidden>
+            <div class="days-grid" style="padding:24px 0;">
+                {% for field in department_form %}
+                    <label><span>{{ field.label }}</span>{{ field }}</label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="tab-panel" data-panel="location" hidden>
+            <div class="days-grid" style="padding:24px 0;">
+                {% for field in location_form %}
+                    <label><span>{{ field.label }}</span>{{ field }}</label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="tab-panel" data-panel="shift" hidden>
+            <div class="days-grid" style="padding:24px 0;">
+                {% for field in shift_form %}
+                    <label><span>{{ field.label }}</span>{{ field }}</label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="tab-panel" data-panel="inteos" hidden>
+            <div class="days-grid" style="padding:24px 0;">
+                {% for field in inteos_form %}
+                    <label><span>{{ field.label }}</span>{{ field }}</label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="tab-panel" data-panel="zucchetti" hidden>
+            <div class="days-grid" style="padding:24px 0;">
+                {% for field in zucchetti_form %}
+                    <label><span>{{ field.label }}</span>{{ field }}</label>
+                {% endfor %}
+            </div>
+        </div>
+
+    </form>
+</section>
+
+<script>
+(function () {
+    const btns = document.querySelectorAll('.tab-btn');
+    const panels = document.querySelectorAll('.tab-panel');
+    btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            btns.forEach(b => b.classList.remove('active'));
+            panels.forEach(p => p.hidden = true);
+            btn.classList.add('active');
+            document.querySelector('[data-panel="' + btn.dataset.tab + '"]').hidden = false;
+        });
+    });
+
+    // If there are form errors, switch to the tab that has the first error
+    const firstError = document.querySelector('.error-text');
+    if (firstError) {
+        const panel = firstError.closest('.tab-panel');
+        if (panel) {
+            document.querySelector('[data-tab="' + panel.dataset.panel + '"]').click();
+        }
+    }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python manage.py runserver 0.0.0.0:8010)",
+      "Bash(findstr \"8010\")",
+      "Bash(python3)",
+      "Bash(python)",
+      "Bash(python -c ' *)",
+      "Bash(taskkill /F /IM python.exe)",
+      "Bash(taskkill /IM python.exe /F)",
+      "Bash(Get-Process python *)",
+      "Bash(Stop-Process -Force)",
+      "Bash(powershell -Command \"Get-Process -Name python -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host done\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":8010\")",
+      "Bash(d:/DjangoApps/HR_attendance/.venv/Scripts/pip.exe show *)",
+      "Bash(d:/DjangoApps/HR_attendance/.venv/Scripts/pip show *)",
+      "Bash(\"/d/DjangoApps/HR_attendance/.venv/Scripts/pip\" show *)",
+      "PowerShell(& \"D:\\\\DjangoApps\\\\HR_attendance\\\\.venv\\\\Scripts\\\\python.exe\" -m pip show python-dotenv)",
+      "PowerShell($proc = Get-Process -Id 6576 -ErrorAction SilentlyContinue; $proc | Select-Object Id, ProcessName, Path, StartTime; \\(Get-Item \\(Get-Process -Id 6576\\).Path\\).FullName 2>&1)"
+    ]
+  }
+}

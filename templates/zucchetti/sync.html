@@ -1,0 +1,295 @@
+{% extends "import_excel/base.html" %}
+{% load group_tags %}
+{% block title %}Zucchetti{% endblock %}
+{% block content %}
+<style>
+/* ── upload box ── */
+.zuc-upload-box{
+    background:var(--card);border:1px solid var(--card-border);border-radius:16px;
+    padding:18px 24px;display:inline-flex;align-items:center;gap:14px;
+    box-shadow:0 4px 16px rgba(98,66,34,0.07);margin-bottom:20px;
+}
+.zuc-upload-box label{font-size:0.75rem;font-weight:700;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--primary);white-space:nowrap;}
+.zuc-file-input{font-size:0.85rem;color:var(--text);font-family:inherit;}
+.btn-primary{padding:8px 22px;background:var(--primary);color:#fff;border:none;
+    border-radius:999px;font-size:0.84rem;font-weight:600;cursor:pointer;
+    font-family:inherit;white-space:nowrap;transition:background .15s;}
+.btn-primary:hover{background:var(--primary-deep);}
+.btn-secondary{padding:8px 18px;background:transparent;color:var(--primary);
+    border:1px solid var(--primary);border-radius:999px;font-size:0.84rem;
+    font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s;}
+.btn-secondary:hover{background:rgba(127,79,42,.08);}
+.btn-danger{padding:4px 12px;background:transparent;color:#c0392b;border:1px solid #c0392b;
+    border-radius:999px;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;}
+.btn-danger:hover{background:#fdecea;}
+
+/* ── tabs ── */
+.tab-bar{display:flex;gap:4px;border-bottom:2px solid var(--bg-strong);margin-bottom:24px;
+    position:sticky;top:0;background:var(--bg);z-index:20;padding-top:4px;}
+.tab-btn{padding:9px 24px;background:none;border:none;border-bottom:2px solid transparent;
+    margin-bottom:-2px;color:var(--muted);font-size:0.88rem;font-weight:600;cursor:pointer;
+    font-family:inherit;letter-spacing:.04em;border-radius:8px 8px 0 0;transition:color .15s,background .15s;}
+.tab-btn:hover{color:var(--primary);background:rgba(127,79,42,.06);}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);background:rgba(127,79,42,.05);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ── tables ── */
+.zuc-wrap{background:var(--card);border:1px solid var(--card-border);border-radius:16px;
+    overflow:auto;max-height:68vh;box-shadow:0 4px 18px rgba(98,66,34,0.08);}
+.zuc-table{width:100%;border-collapse:collapse;font-size:0.84rem;}
+.zuc-table thead th{position:sticky;top:0;background:rgba(245,238,230,0.97);
+    text-align:left;padding:11px 14px;font-size:0.7rem;font-weight:700;
+    text-transform:uppercase;letter-spacing:.07em;color:var(--primary);
+    border-bottom:1px solid var(--card-border);z-index:1;}
+.zuc-table td{padding:9px 14px;border-bottom:1px solid rgba(123,85,52,.08);color:var(--text);}
+.zuc-table tbody tr:last-child td{border-bottom:none;}
+.zuc-table tbody tr:hover td{background:rgba(127,79,42,.04);}
+.zuc-empty{padding:32px 14px;color:var(--muted);font-style:italic;font-size:0.88rem;}
+
+/* ── card mgmt layout ── */
+.cm-layout{display:flex;gap:24px;align-items:flex-start;}
+.cm-main{flex:1;min-width:0;}
+.cm-side{width:340px;flex-shrink:0;}
+.stat-box{background:var(--card);border:1px solid var(--card-border);border-radius:16px;
+    padding:20px 22px;box-shadow:0 4px 18px rgba(98,66,34,0.08);
+    overflow-y:auto;overflow-x:hidden;max-height:68vh;}
+.stat-box h3{font-family:'Cormorant Garamond',serif;font-size:1.1rem;
+    color:var(--primary);margin:0 0 4px;}
+.stat-sub{font-size:0.78rem;color:var(--muted);margin:0 0 14px;}
+.stat-sub strong{color:var(--text);}
+.mc-row{display:flex;align-items:center;justify-content:space-between;
+    padding:8px 4px;border-bottom:1px solid rgba(123,85,52,.08);}
+.mc-row:last-child{border-bottom:none;}
+.badge-count{display:inline-block;background:var(--primary);color:#fff;border-radius:999px;
+    font-size:0.75rem;font-weight:700;padding:2px 10px;min-width:28px;text-align:center;flex-shrink:0;}
+
+/* ── plant settings ── */
+.ps-table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+.ps-table th{text-align:left;padding:10px 12px;font-size:0.7rem;font-weight:700;
+    text-transform:uppercase;letter-spacing:.07em;color:var(--primary);
+    border-bottom:1px solid var(--card-border);}
+.ps-table td{padding:6px 8px;border-bottom:1px solid rgba(123,85,52,.08);}
+.ps-input{width:100%;padding:7px 10px;border:1px solid var(--card-border);border-radius:8px;
+    font-family:inherit;font-size:0.84rem;background:var(--bg);color:var(--text);}
+.ps-input:focus{outline:none;border-color:var(--primary);}
+.ps-wrap{background:var(--card);border:1px solid var(--card-border);border-radius:16px;
+    padding:24px;box-shadow:0 4px 18px rgba(98,66,34,0.08);max-width:900px;}
+</style>
+
+<div style="max-width:1400px;width:100%;margin:32px auto;padding:0 32px;box-sizing:border-box;">
+
+    <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--primary);margin:0 0 24px;">Zucchetti</h2>
+
+    <div class="tab-bar">
+        <button class="tab-btn {% if active_tab == 'import_zucchetti' %}active{% endif %}" onclick="switchTab(event,'import_zucchetti')">Import from Zucchetti</button>
+        <button class="tab-btn {% if active_tab == 'new_request' %}active{% endif %}" onclick="switchTab(event,'new_request')">New Request</button>
+        <button class="tab-btn {% if active_tab == 'plant_settings' %}active{% endif %}" onclick="switchTab(event,'plant_settings')">Plant Settings</button>
+        <button class="tab-btn {% if active_tab == 'generate_csv' %}active{% endif %}" onclick="switchTab(event,'generate_csv')">Generate CSV</button>
+    </div>
+
+    <!-- ── TAB 1: Import from Zucchetti ── -->
+    <div id="tab-import_zucchetti" class="tab-panel {% if active_tab == 'import_zucchetti' %}active{% endif %}">
+
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
+            <form method="post" enctype="multipart/form-data" class="zuc-upload-box" style="margin-bottom:0;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="import_zucchetti">
+                <label>Zucchetti Excel</label>
+                <input type="file" name="file" accept=".xlsx,.xls" class="zuc-file-input">
+                <button type="submit" class="btn-primary">Import</button>
+            </form>
+            {% if total_zucchetti %}
+            <form method="post" onsubmit="return confirm('Clear all {{ total_zucchetti }} records?');">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="clear_zucchetti">
+                <button type="submit" class="btn-danger" style="padding:8px 18px;font-size:0.84rem;">Clear all</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <p style="font-size:0.82rem;color:var(--muted);margin:0 0 20px;font-weight:500;">
+            <strong style="color:var(--text);">{{ total_zucchetti }}</strong> employee records loaded
+        </p>
+
+        <div class="zuc-wrap">
+            <table class="zuc-table">
+                <thead>
+                    <tr>
+                        <th>Emp Code</th><th>Subject Code</th>
+                        <th>Surname</th><th>Name</th><th>Card Code</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in zucchetti_employees %}
+                    <tr>
+                        <td>{{ r.emp_code }}</td><td>{{ r.subject_code }}</td>
+                        <td>{{ r.surname }}</td><td>{{ r.name }}</td>
+                        <td>{{ r.card_code }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="zuc-empty">No data — import Zucchetti Excel file.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ── TAB 2: New Request ── -->
+    <div id="tab-new_request" class="tab-panel {% if active_tab == 'new_request' %}active{% endif %}">
+
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
+            <form method="post" enctype="multipart/form-data" class="zuc-upload-box" style="margin-bottom:0;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="import_request">
+                <label>Request Excel</label>
+                <input type="file" name="file" accept=".xlsx,.xls" class="zuc-file-input">
+                <button type="submit" class="btn-primary">Import</button>
+            </form>
+            {% if request_rows %}
+            <form method="post" onsubmit="return confirm('Clear all {{ request_rows|length }} rows?');">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="clear_request">
+                <button type="submit" class="btn-danger" style="padding:8px 18px;font-size:0.84rem;">Clear all</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <p style="font-size:0.82rem;color:var(--muted);margin:0 0 20px;font-weight:500;">
+            <strong style="color:var(--text);">{{ request_rows|length }}</strong> rows loaded
+        </p>
+
+        <div class="zuc-wrap">
+            <table class="zuc-table">
+                <thead>
+                    <tr>
+                        <th>Emp Code</th><th>Name</th><th>Plant</th>
+                        <th>Date</th><th>In</th><th>Out</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in request_rows %}
+                    <tr>
+                        <td>{{ r.emp_code }}</td><td>{{ r.name }}</td><td>{{ r.plant }}</td>
+                        <td>{{ r.date|date:"d-m-Y" }}</td>
+                        <td>{{ r.time_in|hhmm }}</td>
+                        <td>{{ r.time_out|hhmm }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="zuc-empty">No data — import Excel file.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ── TAB 3: Plant Settings ── -->
+    <div id="tab-plant_settings" class="tab-panel {% if active_tab == 'plant_settings' %}active{% endif %}">
+        <div class="ps-wrap">
+            <form method="post" id="plant-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_plant_settings">
+                <table class="ps-table" id="ps-table">
+                    <thead>
+                        <tr>
+                            <th>Plant</th><th>Terminal</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="ps-body">
+                        {% for ps in plant_settings %}
+                        <tr>
+                            <td><input type="text" name="plant" value="{{ ps.plant }}" class="ps-input"></td>
+                            <td><input type="text" name="terminal" value="{{ ps.terminal }}" class="ps-input"></td>
+                            <td><button type="button" class="btn-danger" onclick="delRow(this)">✕</button></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td><input type="text" name="plant" value="" class="ps-input" placeholder="e.g. SEN"></td>
+                            <td><input type="text" name="terminal" value="" class="ps-input" placeholder="e.g. T01"></td>
+                            <td><button type="button" class="btn-danger" onclick="delRow(this)">✕</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div style="display:flex;gap:12px;margin-top:16px;">
+                    <button type="button" class="btn-secondary" onclick="addRow()">+ Add row</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── TAB 4: Generate CSV ── -->
+    <div id="tab-generate_csv" class="tab-panel {% if active_tab == 'generate_csv' %}active{% endif %}">
+        <div style="background:var(--card);border:1px solid var(--card-border);border-radius:16px;padding:32px;max-width:500px;box-shadow:0 4px 18px rgba(98,66,34,0.08);">
+            <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--primary);margin:0 0 8px;">Generate DAT File</h3>
+            <p style="color:var(--muted);font-size:0.82rem;margin:0 0 20px;">
+                <strong style="color:var(--text);">{{ request_rows|length }}</strong> request rows &nbsp;·&nbsp;
+                <strong style="color:var(--text);">{{ total_badge }}</strong> badge records &nbsp;·&nbsp;
+                <strong style="color:var(--text);">{{ plant_settings|length }}</strong> plant settings
+            </p>
+
+            {% if not dat_preview %}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="check_dat">
+                <button type="submit" class="btn-primary" style="font-size:1rem;padding:12px 36px;">Generate</button>
+            </form>
+            {% else %}
+            <div style="background:var(--bg);border:1px solid var(--card-border);border-radius:12px;padding:16px 20px;margin-bottom:20px;font-size:0.85rem;">
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--card-border);">
+                    <span style="color:var(--muted);">Lines to generate</span>
+                    <strong style="color:#2e7d32;">{{ dat_preview.ok }}</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--card-border);">
+                    <span style="color:var(--muted);">No badge card found</span>
+                    <strong style="color:#c0392b;">{{ dat_preview.skip_no_badge }}</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--card-border);">
+                    <span style="color:var(--muted);">No terminal configured</span>
+                    <strong style="color:#c0392b;">{{ dat_preview.skip_no_terminal }}</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;">
+                    <span style="color:var(--muted);">No time (IN/OUT)</span>
+                    <strong style="color:#c0392b;">{{ dat_preview.skip_no_time }}</strong>
+                </div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center;">
+                <a href="{% url 'zucchetti_generate_dat' %}" class="btn-primary" style="display:inline-block;text-decoration:none;padding:10px 28px;">↓ Download</a>
+                <form method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="check_dat">
+                    <button type="submit" class="btn-secondary">Re-check</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<script>
+function switchTab(e, name) {
+    e.preventDefault();
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    e.currentTarget.classList.add('active');
+}
+function addRow() {
+    const tbody = document.getElementById('ps-body');
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td><input type="text" name="plant" value="" class="ps-input" placeholder="e.g. SEN"></td>'
+                 + '<td><input type="text" name="terminal" value="" class="ps-input" placeholder="e.g. T01"></td>'
+                 + '<td><button type="button" class="btn-danger" onclick="delRow(this)">✕</button></td>';
+    tbody.appendChild(tr);
+}
+function delRow(btn) {
+    const tbody = document.getElementById('ps-body');
+    if (tbody.rows.length > 1) {
+        btn.closest('tr').remove();
+    }
+}
+</script>
+{% endblock %}

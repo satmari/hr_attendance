@@ -1,0 +1,30 @@
+{% extends "import_excel/base.html" %}
+
+{% block title %}{{ page_title }} | HR Attendance{% endblock %}
+
+{% block content %}
+<section class="card">
+    <p class="eyebrow">Read only report</p>
+    <h1>{{ page_title }}</h1>
+    <p>{{ message }}</p>
+    <p class="muted">Required sources:</p>
+    <div class="timeline">
+        {% for dependency in dependencies %}
+            <div class="timeline-item">{{ dependency }}</div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="card">
+    <p class="eyebrow">Periods in database</p>
+    <div class="period-chip-list">
+        {% for period in periods %}
+            <span class="period-chip {% if selected_month == period.month and selected_year == period.year %}active{% endif %}">
+                {{ period.year }}/{{ period.month|stringformat:"02d" }}
+            </span>
+        {% empty %}
+            <span class="muted">No imported periods.</span>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

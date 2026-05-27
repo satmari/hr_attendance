@@ -1,0 +1,292 @@
+{% extends "import_excel/base.html" %}
+
+{% block title %}Send Mail — HR Attendance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Send Mail</h1>
+  <p class="page-subtitle">SMTP configuration, scheduling and manual report delivery</p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px;">
+
+  <!-- ── SMTP SETTINGS ── -->
+  <section class="card">
+    <h2 class="card-title">SMTP Configuration</h2>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save_config">
+
+      <div class="form-group">
+        <label class="form-label">Email Title</label>
+        <input type="text" name="email_title" class="form-control"
+               value="{{ config.email_title|default:'HR Attendance Monthly Report' }}"
+               placeholder="HR Attendance Monthly Report">
+        <span class="form-hint">Period is appended automatically — e.g. <em>HR Attendance Monthly Report — March 2026</em></span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">SMTP Host</label>
+        <input type="text" name="smtp_host" class="form-control"
+               value="{{ config.smtp_host }}" placeholder="mail.company.com" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">SMTP Port</label>
+        <input type="number" name="smtp_port" class="form-control"
+               value="{{ config.smtp_port }}" min="1" max="65535" required>
+        <span class="form-hint">Use 25 for unauthenticated relay</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Sender Email</label>
+        <input type="text" name="sender_email" class="form-control"
+               value="{{ config.sender_email }}" placeholder="hr-reports@company.com">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">App Base URL <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
+        <input type="text" name="app_base_url" class="form-control"
+               value="{{ config.app_base_url }}" placeholder="http://172.27.161.193/HR_attendance">
+        <span class="form-hint">
+          Intranet URL of this app. When set, the email will include links to the full reports.
+          Leave blank to omit the links section.
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Recipients</label>
+        <textarea name="recipient_emails" class="form-control" rows="3"
+                  placeholder="manager@company.com, hr@company.com">{{ config.recipient_emails }}</textarea>
+        <span class="form-hint">Comma-separated list of email addresses</span>
+      </div>
+
+      <hr class="section-divider">
+      <h3 class="subsection-title">Automatic Schedule</h3>
+
+      <div class="form-group form-check-group">
+        <label class="form-check-label">
+          <input type="checkbox" name="schedule_enabled"
+                 {% if config.schedule_enabled %}checked{% endif %}>
+          Enable automatic monthly send
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Send on day of month</label>
+        <input type="number" name="schedule_day" class="form-control"
+               value="{{ config.schedule_day }}" min="1" max="28" style="width:100px;">
+        <span class="form-hint">
+          e.g. day 10 → sends report for previous month on the 10th.
+          Maximum 28 to avoid month-end issues.
+        </span>
+      </div>
+
+      {% if config.last_sent_month and config.last_sent_year %}
+      <p class="form-hint" style="margin-top:4px;">
+        Last sent: <strong>{{ config.last_sent_month }}/{{ config.last_sent_year }}</strong>
+      </p>
+      {% endif %}
+
+      <button type="submit" class="btn btn-primary" style="margin-top:8px;">Save Configuration</button>
+    </form>
+  </section>
+
+  <!-- ── MANUAL SEND ── -->
+  <section class="card">
+    <h2 class="card-title">Send Report Now</h2>
+    <p class="card-description">
+      Manually trigger a report for any period. The email will be sent immediately
+      to the configured recipients.
+    </p>
+
+    {% if not config.pk %}
+    <div class="alert alert-warning">
+      Save the SMTP configuration first before sending.
+    </div>
+    {% else %}
+
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="send_now">
+
+      <div class="form-group">
+        <label class="form-label">Month</label>
+        <select name="month" class="form-control">
+          {% for num, name in months %}
+          <option value="{{ num }}" {% if num == prev_month %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Year</label>
+        <select name="year" class="form-control">
+          {% for y in year_range %}
+          <option value="{{ y }}" {% if y == prev_year %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="send-preview" style="margin:16px 0;padding:14px;background:var(--surface-2,#f8fafc);border-radius:6px;border:1px solid var(--border,#e5e7eb);">
+        <p style="margin:0 0 4px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Will send to</p>
+        <p style="margin:0;font-size:13px;word-break:break-all;">
+          {% if config.recipient_emails %}
+            {{ config.recipient_emails }}
+          {% else %}
+            <em style="color:var(--muted);">No recipients configured</em>
+          {% endif %}
+        </p>
+      </div>
+
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">
+        Report includes: PC, Absenteeism, Absenteeism SE, Turnover,
+        Absenteeism Complete, Actual vs Budget.
+      </p>
+
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button type="submit" class="btn btn-primary"
+                {% if not config.recipient_emails.strip %}disabled{% endif %}>
+          Send Report
+        </button>
+        <a id="preview-link" href="#" target="_blank" class="btn btn-secondary">
+          Preview Email
+        </a>
+      </div>
+    </form>
+    {% endif %}
+
+    <!-- Schedule status chip -->
+    <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border,#e5e7eb);">
+      <p style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Schedule Status</p>
+      {% if config.schedule_enabled %}
+      <span class="status-badge status-active">
+        Active — sends on day {{ config.schedule_day }} of each month
+      </span>
+      {% else %}
+      <span class="status-badge status-inactive">Disabled</span>
+      {% endif %}
+      <p style="margin:10px 0 0;font-size:12px;color:var(--muted);">
+        When active, the report for the <em>previous</em> month is sent automatically
+        at 07:00 on the configured day (e.g. day 10 of May → April report).
+      </p>
+    </div>
+  </section>
+
+</div>
+
+<!-- ── SEND LOG ── -->
+<section class="card">
+  <h2 class="card-title">Send History</h2>
+  {% if logs %}
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Sent at</th>
+          <th>Period</th>
+          <th>Trigger</th>
+          <th>Status</th>
+          <th>Recipients</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td style="white-space:nowrap;">{{ log.sent_at|date:"d.m.Y H:i" }}</td>
+          <td>{{ log.month }}/{{ log.year }}</td>
+          <td>
+            <span class="badge {% if log.triggered_by == 'schedule' %}badge-blue{% else %}badge-gray{% endif %}">
+              {{ log.triggered_by }}
+            </span>
+          </td>
+          <td>
+            <span class="badge {% if log.status == 'success' %}badge-green{% else %}badge-red{% endif %}">
+              {{ log.status }}
+            </span>
+          </td>
+          <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            {{ log.recipients }}
+          </td>
+          <td style="font-size:12px;color:var(--muted);max-width:200px;">
+            {{ log.message|truncatechars:80 }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p style="color:var(--muted);font-size:14px;margin:0;">No emails sent yet.</p>
+  {% endif %}
+</section>
+
+<style>
+.page-header { margin-bottom: 28px; }
+.page-title  { margin: 0 0 4px; font-size: 24px; font-weight: 700; }
+.page-subtitle { margin: 0; color: var(--muted); font-size: 14px; }
+
+.card {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 10px;
+  padding: 24px;
+}
+.card-title       { margin: 0 0 16px; font-size: 16px; font-weight: 700; }
+.card-description { margin: 0 0 20px; font-size: 13px; color: var(--muted); }
+
+.form-group        { margin-bottom: 16px; }
+.form-label        { display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600; color: var(--text, #374151); }
+.form-hint         { display: block; margin-top: 4px; font-size: 11px; color: var(--muted); }
+.form-check-group  { display: flex; align-items: center; gap: 8px; }
+.form-check-label  { font-size: 13px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+
+.section-divider   { border: none; border-top: 1px solid var(--border, #e5e7eb); margin: 20px 0; }
+.subsection-title  { margin: 0 0 14px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+
+.btn { display: inline-block; padding: 9px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; }
+.btn-primary { background: #1d4ed8; color: #fff; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary:hover:not(:disabled) { background: #1e40af; }
+
+.status-badge       { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.status-active      { background: #dcfce7; color: #166534; }
+.status-inactive    { background: #f1f5f9; color: #64748b; }
+
+.alert              { padding: 12px 16px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; }
+.alert-warning      { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+
+.table-wrapper      { overflow-x: auto; }
+.data-table         { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th      { text-align: left; padding: 9px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); border-bottom: 2px solid var(--border, #e5e7eb); }
+.data-table td      { padding: 9px 12px; border-bottom: 1px solid var(--border, #f1f5f9); vertical-align: middle; }
+.data-table tr:last-child td { border-bottom: none; }
+
+.badge              { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+.badge-green        { background: #dcfce7; color: #166534; }
+.badge-red          { background: #fee2e2; color: #991b1b; }
+.badge-blue         { background: #dbeafe; color: #1e40af; }
+.badge-gray         { background: #f1f5f9; color: #475569; }
+.btn-secondary      { background: #f1f5f9; color: #374151; border: 1px solid #e5e7eb; text-decoration: none; }
+.btn-secondary:hover { background: #e5e7eb; }
+</style>
+
+<script>
+(function () {
+  const base = "{% url 'sendmail_preview' %}";
+  const monthSel = document.querySelector('select[name="month"]');
+  const yearSel  = document.querySelector('select[name="year"]');
+  const link     = document.getElementById('preview-link');
+
+  function updateLink() {
+    if (!monthSel || !yearSel || !link) return;
+    link.href = base + '?month=' + monthSel.value + '&year=' + yearSel.value;
+  }
+
+  if (monthSel) monthSel.addEventListener('change', updateLink);
+  if (yearSel)  yearSel.addEventListener('change', updateLink);
+  updateLink();
+})();
+</script>
+{% endblock %}

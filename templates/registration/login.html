@@ -1,0 +1,117 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — HR Attendance</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="{% static 'import_excel/css/app.css' %}">
+    <style>
+        .login-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .login-card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 48px 44px;
+            width: 100%;
+            max-width: 420px;
+        }
+        .login-card h1 {
+            margin: 0 0 8px;
+            font-size: 2rem;
+            color: var(--primary-deep);
+        }
+        .login-card p.subtitle {
+            margin: 0 0 32px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        .field {
+            margin-bottom: 18px;
+        }
+        .field label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.82rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
+        }
+        .field input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.6);
+            font-family: "Manrope", sans-serif;
+            font-size: 0.95rem;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .field input:focus {
+            border-color: var(--primary);
+        }
+        .errorlist {
+            list-style: none;
+            margin: 6px 0 0;
+            padding: 0;
+            color: #b5402e;
+            font-size: 0.82rem;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-family: "Manrope", sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.15s;
+        }
+        .login-btn:hover {
+            background: var(--primary-deep);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrap">
+        <div class="login-card">
+            <h1>HR Attendance</h1>
+            <p class="subtitle">Sign in to continue</p>
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="field">
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {% if field.errors %}
+                            <ul class="errorlist">
+                                {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                {% if form.non_field_errors %}
+                    <ul class="errorlist" style="margin-bottom:14px">
+                        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+                <button type="submit" class="login-btn">Sign in</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

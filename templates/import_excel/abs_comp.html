@@ -1,0 +1,103 @@
+{% extends "import_excel/base.html" %}
+
+{% block title %}ABS Complete | HR Attendance{% endblock %}
+
+{% block content %}
+<section class="card">
+    <p class="eyebrow">Report</p>
+    <h1>ABS Complete</h1>
+
+    {% if periods %}
+    <div class="period-chip-list" style="margin-top:16px;">
+        {% for period in periods %}
+            <a href="?month={{ period.month }}&year={{ period.year }}"
+               class="period-chip {% if period.month == selected_month and period.year == selected_year %}active{% endif %}">
+                {{ period.month }}/{{ period.year }}
+            </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="muted" style="margin-top:12px;">No imported periods. Please import an Excel file first.</p>
+    {% endif %}
+</section>
+
+{% if report %}
+<section class="card" style="padding:16px 10px;">
+    <div class="abs-comp-wrap">
+        <table class="abs-comp-table">
+            <thead>
+                <tr>
+                    <th class="ac-subsid-head" rowspan="2">SUBSID</th>
+                    <th class="ac-week-head" rowspan="2">WEEK</th>
+                    <th rowspan="2" class="ac-num">YEAR</th>
+                    <th rowspan="2" class="ac-num">MONTH</th>
+                    <th rowspan="2" class="ac-num">DAY</th>
+                    <th colspan="5" style="text-align:center;background:rgba(180,210,240,0.3);border-bottom:1px solid rgba(98,66,34,0.12);">ZUCCHETTI</th>
+                    <th rowspan="2" class="ac-pct" style="background:rgba(200,240,200,0.25);">ABS&nbsp;%<br>without&nbsp;KI</th>
+                </tr>
+                <tr>
+                    <th class="ac-num" style="background:rgba(180,210,240,0.2);">ACTIVE</th>
+                    <th class="ac-num" style="background:rgba(180,210,240,0.2);">PRESENT</th>
+                    <th class="ac-num" style="background:rgba(180,210,240,0.2);">NOT<br>PRESENT</th>
+                    <th class="ac-pct" style="background:rgba(180,210,240,0.2);">ABS&nbsp;%</th>
+                    <th class="ac-trend" style="background:rgba(180,210,240,0.2);">TREND</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for site in report.sites %}
+                    {% for week in site.weeks %}
+                        {% for day in week.days %}
+                        <tr class="{% if day.is_holiday %}ac-holiday{% elif not day.is_working %}ac-inactive{% endif %}">
+                            {% if day.first_in_site %}
+                            <td rowspan="{{ site.site_rowspan }}" class="ac-subsid">{{ site.name }}</td>
+                            {% endif %}
+                            {% if day.first_in_week %}
+                            <td rowspan="{{ week.rowspan }}" class="ac-week">{{ week.label }}</td>
+                            {% endif %}
+                            <td class="ac-num">{{ day.year }}</td>
+                            <td class="ac-num">{{ day.month }}</td>
+                            <td class="ac-num ac-day {% if day.weekday == 'SAT' or day.weekday == 'SUN' %}ac-weekend{% endif %}">
+                                {{ day.day }}<small class="ac-wd"> {{ day.weekday }}</small>
+                            </td>
+                            <td class="ac-num">{{ day.active }}</td>
+                            <td class="ac-num">{{ day.present }}</td>
+                            <td class="ac-num">{{ day.not_present }}</td>
+                            <td class="ac-pct">{{ day.abs_pct_display }}</td>
+                            <td class="ac-trend trend-{{ day.trend }}">
+                                {% if day.trend == "check" %}☑{% elif day.trend == "warning" %}!{% elif day.trend == "danger" %}☒{% endif %}
+                            </td>
+                            <td class="ac-pct" style="background:rgba(200,240,200,0.1);">
+                                {% if site.show_ki %}{{ day.abs_pct_woki_display }}{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% endfor %}
+                    <tr class="ac-total-row">
+                        <td colspan="4" class="ac-total-label">total</td>
+                        <td class="ac-num">{{ site.total.active }}</td>
+                        <td class="ac-num">{{ site.total.present }}</td>
+                        <td class="ac-num">{{ site.total.not_present }}</td>
+                        <td class="ac-pct">{{ site.total.abs_pct_display }}</td>
+                        <td class="ac-trend trend-{{ site.total.trend }}">
+                            {% if site.total.trend == "check" %}☑{% elif site.total.trend == "warning" %}!{% elif site.total.trend == "danger" %}☒{% endif %}
+                        </td>
+                        <td class="ac-pct" style="background:rgba(200,240,200,0.1);">
+                            {% if site.show_ki %}{{ site.total.abs_pct_woki_display }}{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{% elif selected_month and selected_year %}
+<section class="card">
+    <p class="muted">No data for period {{ selected_month }}/{{ selected_year }}.</p>
+</section>
+{% else %}
+<section class="card">
+    <p class="muted">Select a period by clicking a chip above.</p>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,40 @@
+﻿
+=== 3/2026 ===
+  '-'                                       504
+  'KI_OP. IN LINE'                          278
+  'KI_PERM. NO LOG'                           2
+  'KI_PREP'                                   2
+  'KI_QC IN LINE'                            15
+  'KI_TRAIN IN LINE'                          6
+  'SE_OP. IN LINE'                          126
+  'SE_QC IN LINE'                             7
+  'SU_BOND'                                   4
+  'SU_from cutting'                           1
+  'SU_LONG.T.'                                1
+  'SU_MOVED'                                  4
+  'SU_OP. IN LINE'                          493
+  'SU_PERM. NO LOG'                          12
+  'SU_PREG.'                                  1
+  'SU_PREP'                                  19
+  'SU_QC IN LINE'                            38
+  'SU_TRAIN C.'                              12
+  'SU_TRAIN IN LINE'                         16
+
+=== 4/2026 ===
+  '-'                                       495
+  'KI_OP. IN LINE'                          274
+  'KI_PERM. NO LOG'                           2
+  'KI_QC IN LINE'                            15
+  'KI_TRAIN IN LINE'                          3
+  'SE_OP. IN LINE'                          122
+  'SE_PERM. NO LOG'                           1
+  'SE_QC IN LINE'                             8
+  'SE_TRAIN IN LINE'                          3
+  'SU_BOND'                                   6
+  'SU_LONG.T.'                                2
+  'SU_OP. IN LINE'                          502
+  'SU_PERM. NO LOG'                          13
+  'SU_PREP'                                  19
+  'SU_QC IN LINE'                            39
+  'SU_TRAIN C.'                               3
+  'SU_TRAIN IN LINE'                         14

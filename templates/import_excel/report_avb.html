@@ -1,0 +1,311 @@
+{% extends "import_excel/base.html" %}
+
+{% block title %}ACTUAL vs BUDGET Report{% endblock %}
+
+{% block content %}
+<section class="card">
+    <p class="eyebrow">Report</p>
+    <h1>ACTUAL vs BUDGET Report</h1>
+
+    {% if periods %}
+    <div class="period-chip-list" style="margin-top:16px;">
+        {% for period in periods %}
+            <a href="?month={{ period.month }}&year={{ period.year }}"
+               class="period-chip {% if period.month == selected_month and period.year == selected_year %}active{% endif %}">
+                {{ period.month }}/{{ period.year }}
+            </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="muted" style="margin-top:12px;">No imported periods. Please import an Excel file first.</p>
+    {% endif %}
+</section>
+
+{% if report %}
+
+{# ======= BUDGET INPUT FORM ======= #}
+<section class="card avb-budget-form-card">
+    <h2 style="margin-bottom:14px;">Budget Data</h2>
+    <p class="muted" style="margin-bottom:16px;font-size:0.85rem;">
+        Unesi budget vrednosti po fabrici za period {{ selected_month }}/{{ selected_year }}.
+        Turnover GAP se unosi u procentima (npr. 33 za 33%).
+    </p>
+    <form id="budget-form">
+        <input type="hidden" name="month" value="{{ selected_month }}">
+        <input type="hidden" name="year" value="{{ selected_year }}">
+        <div style="overflow-x:auto;">
+        <table class="avb-input-table">
+            <thead>
+                <tr>
+                    <th>Fabrika</th>
+                    <th>MAX capacity</th>
+                    <th>Budgeted turnover GAP (%)</th>
+                    <th>Op. in line TARGET</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% with sub=budget_entries.SUB kik=budget_entries.KIK sen=budget_entries.SEN %}
+                <tr>
+                    <td><strong>SUB</strong></td>
+                    <td><input type="number" name="SUB_max_capacity" class="avb-input" value="{{ sub.max_capacity }}" placeholder="npr. 800"></td>
+                    <td><input type="number" name="SUB_budgeted_turnover_gap" class="avb-input" step="0.01" value="{{ sub.budgeted_turnover_gap }}" placeholder="npr. 33.00"></td>
+                    <td><input type="number" name="SUB_target" class="avb-input" value="{{ sub.target }}" placeholder="npr. 536"></td>
+                </tr>
+                <tr>
+                    <td><strong>KIK</strong></td>
+                    <td><input type="number" name="KIK_max_capacity" class="avb-input" value="{{ kik.max_capacity }}" placeholder="npr. 360"></td>
+                    <td><input type="number" name="KIK_budgeted_turnover_gap" class="avb-input" step="0.01" value="{{ kik.budgeted_turnover_gap }}" placeholder="npr. 16.00"></td>
+                    <td><input type="number" name="KIK_target" class="avb-input" value="{{ kik.target }}" placeholder="npr. 302"></td>
+                </tr>
+                <tr>
+                    <td><strong>SEN</strong></td>
+                    <td><input type="number" name="SEN_max_capacity" class="avb-input" value="{{ sen.max_capacity }}" placeholder="npr. 180"></td>
+                    <td><input type="number" name="SEN_budgeted_turnover_gap" class="avb-input" step="0.01" value="{{ sen.budgeted_turnover_gap }}" placeholder="npr. 20.00"></td>
+                    <td><input type="number" name="SEN_target" class="avb-input" value="{{ sen.target }}" placeholder="npr. 144"></td>
+                </tr>
+                {% endwith %}
+            </tbody>
+        </table>
+        </div>
+        <div style="margin-top:14px;display:flex;align-items:center;gap:12px;">
+            <button type="submit" class="btn btn-primary" id="budget-save-btn">Save Budget</button>
+            <span id="budget-save-msg" style="font-size:0.85rem;display:none;"></span>
+        </div>
+    </form>
+</section>
+
+{# ======= MAIN TABLE ======= #}
+<section class="card" style="overflow-x:auto;">
+    <table class="avb-table">
+        <colgroup>
+            <col style="width:155px;">
+            <col style="width:205px;">
+            <col style="width:88px;">
+            <col style="width:118px;">
+            <col style="width:108px;">
+            <col style="width:58px;">
+            <col style="width:108px;">
+            <col style="width:130px;">
+            <col style="width:118px;">
+            <col style="width:120px;">
+            <col style="width:130px;">
+        </colgroup>
+        <thead>
+            <tr class="avb-group-header">
+                <th colspan="2"></th>
+                <th class="avb-center">Op. TOTAL</th>
+                <th colspan="3" class="avb-center avb-actual-bg">ACTUAL DATA</th>
+                <th colspan="3" class="avb-center avb-budget-bg">BUDGET DATA</th>
+                <th colspan="2" class="avb-center avb-diff-bg">ACTUAL - BUDGET</th>
+            </tr>
+            <tr class="avb-col-header">
+                <th></th>
+                <th></th>
+                <th class="avb-center"></th>
+                <th class="avb-center avb-actual-bg">Op. in line logging<br>ACTUAL (current)</th>
+                <th class="avb-center avb-actual-bg">Previous report</th>
+                <th class="avb-center avb-actual-bg">Δ</th>
+                <th class="avb-center avb-budget-bg">MAX capacity</th>
+                <th class="avb-center avb-budget-bg">Budgeted turnover GAP</th>
+                <th class="avb-center avb-budget-bg">Op. in line TARGET</th>
+                <th class="avb-center avb-diff-bg">ACTUAL - TARGET</th>
+                <th class="avb-center avb-diff-bg">Actual turnover GAP</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for site in report.sites %}
+
+            <tr class="avb-site-first-row">
+                <td class="avb-site-label" rowspan="{{ site.rowspan }}">{{ site.name }}</td>
+                <td>{{ site.inline_rows.0.label }}</td>
+                <td class="avb-center avb-num">{{ site.inline_rows.0.after }}</td>
+                <td class="avb-center avb-num avb-actual-bg" rowspan="{{ site.rowspan }}">
+                    <strong>{{ site.logging_after }}</strong>
+                </td>
+                <td class="avb-center avb-num avb-actual-bg" rowspan="{{ site.rowspan }}">
+                    {{ site.logging_before }}
+                </td>
+                <td class="avb-center avb-num avb-actual-bg avb-delta {% if site.delta > 0 %}avb-pos{% elif site.delta < 0 %}avb-neg{% endif %}"
+                    rowspan="{{ site.rowspan }}">
+                    {{ site.direction }}{% if site.delta != 0 %} ({{ site.delta }}){% endif %}
+                </td>
+                <td class="avb-center avb-budget-bg" rowspan="{{ site.rowspan }}">
+                    {% if site.max_capacity %}{{ site.max_capacity }}{% else %}—{% endif %}
+                </td>
+                <td class="avb-center avb-budget-bg" rowspan="{{ site.rowspan }}">
+                    {% if site.budgeted_turnover_gap %}{{ site.budgeted_turnover_gap }}{% else %}—{% endif %}
+                </td>
+                <td class="avb-center avb-budget-bg" rowspan="{{ site.rowspan }}">
+                    {% if site.target %}{{ site.target }}{% else %}—{% endif %}
+                </td>
+                <td class="avb-center avb-diff-bg {% if site.actual_minus_target is not None %}{% if site.actual_minus_target < 0 %}avb-neg{% else %}avb-pos{% endif %}{% endif %}"
+                    rowspan="{{ site.rowspan }}">
+                    {% if site.actual_minus_target is not None %}{{ site.actual_minus_target }}{% else %}—{% endif %}
+                </td>
+                <td class="avb-center avb-diff-bg" rowspan="{{ site.rowspan }}">
+                    {% if site.actual_turnover_gap %}{{ site.actual_turnover_gap }}{% else %}—{% endif %}
+                </td>
+            </tr>
+
+            {% for row in site.inline_rows %}{% if not forloop.first %}
+            <tr>
+                <td class="avb-indent">{{ row.label }}</td>
+                <td class="avb-center avb-num">{{ row.after }}</td>
+            </tr>
+            {% endif %}{% endfor %}
+
+            <tr class="avb-subtotal">
+                <td class="avb-indent"><strong>Op. in line TOTAL</strong></td>
+                <td class="avb-center avb-num"><strong>{{ site.inline_total_after }}</strong></td>
+            </tr>
+
+            {% for row in site.extra_rows %}
+            <tr>
+                <td class="avb-indent">{{ row.label }}</td>
+                <td class="avb-center avb-num">{{ row.after }}</td>
+            </tr>
+            {% endfor %}
+
+            <tr class="avb-op-total">
+                <td><strong>Op. TOTAL</strong></td>
+                <td class="avb-center avb-num"><strong>{{ site.total_after }}</strong></td>
+            </tr>
+
+            {% endfor %}
+
+            {# GORDON TOTAL #}
+            <tr class="avb-gordon">
+                <td colspan="2"><strong>GORDON TOTAL</strong></td>
+                <td class="avb-center avb-num"><strong>{{ report.gordon.total_after }}</strong></td>
+                <td class="avb-center avb-num avb-actual-bg"><strong>{{ report.gordon.logging_after }}</strong></td>
+                <td class="avb-center avb-num avb-actual-bg">{{ report.gordon.logging_before }}</td>
+                <td class="avb-center avb-num avb-actual-bg avb-delta {% if report.gordon.delta > 0 %}avb-pos{% elif report.gordon.delta < 0 %}avb-neg{% endif %}">
+                    {{ report.gordon.direction }}{% if report.gordon.delta != 0 %} ({{ report.gordon.delta }}){% endif %}
+                </td>
+                <td class="avb-center avb-budget-bg">
+                    {% if report.gordon.max_capacity %}{{ report.gordon.max_capacity }}{% else %}—{% endif %}
+                </td>
+                <td class="avb-center avb-budget-bg">—</td>
+                <td class="avb-center avb-budget-bg">
+                    {% if report.gordon.target %}{{ report.gordon.target }}{% else %}—{% endif %}
+                </td>
+                <td class="avb-center avb-diff-bg {% if report.gordon.actual_minus_target is not None %}{% if report.gordon.actual_minus_target < 0 %}avb-neg{% else %}avb-pos{% endif %}{% endif %}">
+                    {% if report.gordon.actual_minus_target is not None %}{{ report.gordon.actual_minus_target }}{% else %}—{% endif %}
+                </td>
+                <td class="avb-center avb-diff-bg">
+                    {% if report.gordon.actual_turnover_gap %}{{ report.gordon.actual_turnover_gap }}{% else %}—{% endif %}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+{% elif selected_month and selected_year %}
+<section class="card">
+    <p class="muted">No data for period {{ selected_month }}/{{ selected_year }}. Check that the import has completed.</p>
+</section>
+{% else %}
+<section class="card">
+    <p class="muted">Select a period by clicking a chip above.</p>
+</section>
+{% endif %}
+
+<style>
+.avb-table {
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    min-width: 960px;
+    width: 100%;
+}
+.avb-table th, .avb-table td {
+    border: 1px solid #ddd;
+    padding: 6px 10px;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.avb-group-header th {
+    background: #f0ebe4;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-align: center;
+}
+.avb-col-header th {
+    background: #f7f4f0;
+    font-weight: 600;
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+.avb-center { text-align: center; }
+.avb-num { font-variant-numeric: tabular-nums; }
+.avb-indent { padding-left: 22px; color: #555; }
+
+.avb-actual-bg { background: rgba(50, 110, 200, 0.06); }
+.avb-budget-bg { background: rgba(60, 150, 60, 0.06); }
+.avb-diff-bg   { background: rgba(190, 90, 40, 0.06); }
+
+.avb-site-label {
+    font-weight: 700;
+    background: rgba(127, 79, 42, 0.09) !important;
+    vertical-align: top;
+    padding-top: 10px;
+    font-size: 0.84rem;
+    border-right: 2px solid #b09a80;
+}
+.avb-site-first-row td { background: rgba(127, 79, 42, 0.03); }
+.avb-subtotal td { background: rgba(0,0,0,0.025); border-top: 1px solid #c0b0a0; }
+.avb-op-total td { background: rgba(127, 79, 42, 0.08); border-top: 2px solid #b09a80; font-size: 0.9rem; }
+.avb-gordon td { background: rgba(127, 79, 42, 0.14); border-top: 3px solid #7f4f2a; font-size: 0.92rem; }
+
+.avb-delta { font-weight: 600; }
+.avb-pos { color: #1a7a1a; }
+.avb-neg { color: #c0392b; }
+
+/* Budget form */
+.avb-budget-form-card { }
+.avb-input-table { border-collapse: collapse; }
+.avb-input-table th, .avb-input-table td { border: 1px solid #ddd; padding: 8px 12px; }
+.avb-input-table th { background: #f7f4f0; font-weight: 600; font-size: 0.85rem; }
+.avb-input {
+    width: 120px;
+    padding: 5px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+.avb-input:focus { outline: none; border-color: #7f4f2a; box-shadow: 0 0 0 2px rgba(127,79,42,0.15); }
+</style>
+
+<script>
+document.getElementById('budget-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('budget-save-btn');
+    const msg = document.getElementById('budget-save-msg');
+    btn.disabled = true;
+    msg.style.display = 'none';
+    const data = new FormData(this);
+    data.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    try {
+        const resp = await fetch('{% url "api_save_budget" %}', { method: 'POST', body: data });
+        const json = await resp.json();
+        if (json.ok) {
+            msg.textContent = 'Saved! Refreshing...';
+            msg.style.color = '#1a7a1a';
+            msg.style.display = 'inline';
+            setTimeout(() => location.reload(), 800);
+        } else {
+            msg.textContent = 'Error: ' + (json.error || 'unknown');
+            msg.style.color = '#c0392b';
+            msg.style.display = 'inline';
+            btn.disabled = false;
+        }
+    } catch(err) {
+        msg.textContent = 'Network error';
+        msg.style.color = '#c0392b';
+        msg.style.display = 'inline';
+        btn.disabled = false;
+    }
+});
+</script>
+{% endblock %}

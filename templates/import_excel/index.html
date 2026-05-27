@@ -1,0 +1,339 @@
+{% extends "import_excel/base.html" %}
+
+{% block title %}Import Center | HR Attendance{% endblock %}
+
+{% block content %}
+<section class="grid-two">
+    <div class="card">
+        <p class="eyebrow">Import center</p>
+        <h1>Upload Excel file</h1>
+        <div id="import-busy" class="busy-overlay" hidden>
+            <div class="busy-indicator">
+                <span class="spinner"></span>
+                <strong id="busy-text">Processing file...</strong>
+                <span class="muted">Please wait a few seconds.</span>
+            </div>
+        </div>
+        <form id="import-form" class="stack-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label>
+                <span>Excel file</span>
+                <input type="file" id="file-input" name="file" accept=".xlsx,.xlsm,.xltx,.xltm" required>
+            </label>
+            <div class="inline-grid">
+                <label>
+                    <span>Month</span>
+                    <input type="number" id="month-input" name="month" min="1" max="12" placeholder="Auto">
+                </label>
+                <label>
+                    <span>Year</span>
+                    <input type="number" id="year-input" name="year" min="2000" max="2100" placeholder="Auto">
+                </label>
+            </div>
+            <label class="checkbox-row">
+                <input type="checkbox" name="replace_existing" value="true">
+                <span>Replace existing for the same period</span>
+            </label>
+            <div class="action-row">
+                <button type="button" class="button button-secondary" id="preview-button">Preview</button>
+                <button type="submit" class="button button-primary" id="import-button" disabled>Import</button>
+            </div>
+        </form>
+        <div id="import-result" class="result-panel muted">Run preview first, then import.</div>
+    </div>
+
+    <div class="card">
+        <p class="eyebrow">Period overview</p>
+        <h2>Existing months in database</h2>
+        <div class="table-wrap compact-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Year</th>
+                        <th>Records</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for period in existing_periods %}
+                        <tr>
+                            <td>{{ period.month }}</td>
+                            <td>{{ period.year }}</td>
+                            <td>{{ period.total }}</td>
+                            <td>
+                                <button class="button button-danger btn-sm" onclick="deletePeriod({{ period.month }}, {{ period.year }})">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3">Database is currently empty.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
+            <h2 class="section-title" style="margin:0;">Recent imports</h2>
+            {% if recent_imports %}
+            <button class="button button-secondary" id="btn-clear-log" style="font-size:0.82rem;padding:8px 14px;">
+                Clear import log
+            </button>
+            {% endif %}
+        </div>
+        <div class="timeline">
+            {% for log in recent_imports %}
+                <div class="timeline-item">
+                    <strong>{{ log.original_file_name }}</strong>
+                    <span>{{ log.month }}/{{ log.year }} | {{ log.status }} | {{ log.imported_rows }} rows | {{ log.created_at|date:"d.m.Y H:i" }}</span>
+                </div>
+            {% empty %}
+                <div class="timeline-item">No import history.</div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<script>
+(function(){
+    const btn = document.getElementById('btn-clear-log');
+    if (!btn) return;
+    btn.addEventListener('click', function() {
+        if (!confirm('Delete entire import log history?')) return;
+        fetch('{% url "api_clear_import_log" %}', {
+            method: 'POST',
+            headers: {'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value}
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) { location.reload(); }
+            else { alert('Error: ' + data.message); }
+        });
+    });
+})();
+</script>
+
+<section class="card">
+    <p class="eyebrow">Preview</p>
+    <h2>Detected columns and first rows</h2>
+    <div id="preview-meta" class="result-panel muted">Preview not yet started.</div>
+    <div id="sheet-validation" class="sheet-validation-wrap" hidden></div>
+    <div id="preview-table" class="table-wrap preview-table-wrap"></div>
+</section>
+
+<script>
+    let previewReady = false;
+
+    async function postForm(url, formData) {
+        const response = await fetch(url, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+        });
+        const ct = response.headers.get("content-type") || "";
+        if (ct.includes("application/json")) {
+            return response.json();
+        }
+        return { success: false, message: "Server returned HTTP " + response.status + " (" + response.statusText + ") — not a JSON response." };
+    }
+
+    function setBusyState(isBusy, text = "Processing file...") {
+        const overlay = document.getElementById("import-busy");
+        const busyText = document.getElementById("busy-text");
+        const previewButton = document.getElementById("preview-button");
+        const importButton = document.getElementById("import-button");
+
+        overlay.hidden = !isBusy;
+        busyText.textContent = text;
+        previewButton.disabled = isBusy;
+        importButton.disabled = isBusy || !previewReady;
+    }
+
+    function setPreviewReady(isReady) {
+        previewReady = isReady;
+        const importButton = document.getElementById("import-button");
+        importButton.disabled = !isReady;
+    }
+
+    function resetPreviewState() {
+        const monthInput = document.getElementById("month-input");
+        const yearInput = document.getElementById("year-input");
+        const meta = document.getElementById("preview-meta");
+        const tableWrap = document.getElementById("preview-table");
+        const result = document.getElementById("import-result");
+        const svWrap = document.getElementById("sheet-validation");
+
+        setPreviewReady(false);
+        monthInput.value = "";
+        yearInput.value = "";
+        meta.textContent = "Preview not yet started.";
+        tableWrap.innerHTML = "";
+        result.textContent = "Run preview first, then import.";
+        if (svWrap) {
+            svWrap.innerHTML = "";
+            svWrap.hidden = true;
+        }
+    }
+
+    function renderSheetValidation(validationList) {
+        const svWrap = document.getElementById("sheet-validation");
+        if (!svWrap || !Array.isArray(validationList)) return;
+
+        let html = "";
+        validationList.forEach(function(sv) {
+            let itemClass = "sv-ok";
+            let icon = "✅";
+
+            if (sv.required) {
+                if (!sv.found) {
+                    itemClass = "sv-error";
+                    icon = "❌";
+                } else if (sv.columns_missing && sv.columns_missing.length > 0) {
+                    itemClass = "sv-warn";
+                    icon = "⚠";
+                }
+            } else {
+                if (!sv.found) {
+                    itemClass = "sv-warn";
+                    icon = "⚠";
+                }
+            }
+
+            html += `<div class="sv-item ${itemClass}">`;
+            html += `<span class="sv-icon">${icon}</span>`;
+            html += `<strong>${sv.name}</strong>`;
+            if (sv.found) {
+                html += ` <span class="muted">${sv.row_count} rows</span>`;
+            } else {
+                html += ` <span class="muted">not found</span>`;
+            }
+            if (sv.columns_missing && sv.columns_missing.length > 0) {
+                html += ` <span class="sv-missing">Missing: ${sv.columns_missing.join(", ")}</span>`;
+            }
+            html += `</div>`;
+        });
+
+        svWrap.innerHTML = html;
+        svWrap.hidden = false;
+    }
+
+    function renderPreview(data) {
+        const meta = document.getElementById("preview-meta");
+        const tableWrap = document.getElementById("preview-table");
+        const monthInput = document.getElementById("month-input");
+        const yearInput = document.getElementById("year-input");
+        const result = document.getElementById("import-result");
+        const svWrap = document.getElementById("sheet-validation");
+
+        if (!data.success) {
+            meta.textContent = data.message;
+            tableWrap.innerHTML = "";
+            if (svWrap) { svWrap.innerHTML = ""; svWrap.hidden = true; }
+            setPreviewReady(false);
+            result.textContent = "Preview failed. Check the file and try again.";
+            return;
+        }
+
+        if (data.month) {
+            monthInput.value = data.month;
+        }
+        if (data.year) {
+            yearInput.value = data.year;
+        }
+
+        meta.innerHTML = `Period: <strong>${data.month}/${data.year}</strong> | Rows: <strong>${data.total_rows}</strong>`;
+
+        if (data.sheet_validation) {
+            renderSheetValidation(data.sheet_validation);
+        }
+
+        const headers = data.headers.filter(Boolean);
+        const rows = data.preview_rows || [];
+        let html = "<table><thead><tr>";
+        headers.forEach(header => {
+            html += `<th>${header}</th>`;
+        });
+        html += "</tr></thead><tbody>";
+        rows.forEach(row => {
+            html += "<tr>";
+            headers.forEach(header => {
+                html += `<td>${row[header] || ""}</td>`;
+            });
+            html += "</tr>";
+        });
+        html += "</tbody></table>";
+        tableWrap.innerHTML = html;
+        result.textContent = "Preview successful. You can now run the import.";
+        setPreviewReady(true);
+    }
+
+    document.getElementById("file-input").addEventListener("change", resetPreviewState);
+
+    document.getElementById("preview-button").addEventListener("click", async () => {
+        const form = document.getElementById("import-form");
+        const formData = new FormData(form);
+        setBusyState(true, "Reading Excel and preparing preview...");
+        try {
+            const data = await postForm("{% url 'api_import_preview' %}", formData);
+            renderPreview(data);
+        } catch (err) {
+            document.getElementById("import-result").textContent = "Preview error: " + err.message;
+            document.getElementById("preview-meta").textContent = "Preview failed: " + err.message;
+        } finally {
+            setBusyState(false);
+        }
+    });
+
+    document.getElementById("import-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const result = document.getElementById("import-result");
+
+        if (!previewReady) {
+            result.textContent = "Run a successful preview before importing.";
+            return;
+        }
+
+        result.textContent = "Import in progress...";
+        setBusyState(true, "Importing data into database...");
+        try {
+            const data = await postForm("{% url 'api_import_upload' %}", new FormData(event.target));
+            if (data.success) {
+                result.innerHTML = `Import successful. Period <strong>${data.month}/${data.year}</strong>, imported <strong>${data.imported_rows}</strong> employees.`;
+            } else {
+                result.textContent = data.message || "Import failed.";
+            }
+        } catch (err) {
+            result.textContent = "Import error: " + err.message;
+        } finally {
+            setBusyState(false);
+        }
+    });
+
+    async function deletePeriod(month, year) {
+        if (!confirm(`Are you sure you want to delete ALL data for period ${month}/${year}?`)) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("month", month);
+        formData.append("year", year);
+
+        setBusyState(true, "Deleting data from database...");
+        try {
+            const data = await postForm("{% url 'api_delete_period' %}", formData);
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        } finally {
+            setBusyState(false);
+        }
+    }
+</script>
+{% endblock %}

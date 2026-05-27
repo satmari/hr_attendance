@@ -1,0 +1,58 @@
+{% load static group_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HR Attendance{% endblock %}</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="{% static 'import_excel/css/app.css' %}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    <div class="page-shell">
+        <header class="site-header">
+            <a href="{% url 'home' %}" class="brand">HR Attendance</a>
+            <nav class="site-nav">
+                {% if user|has_group:"hr_attendance" %}
+                <a href="{% url 'import_center' %}">Import Excel</a>
+                <a href="{% url 'personnel_presence_list' %}">Personnel Records</a>
+                <a href="#">|</a>
+                <a href="{% url 'report_pc' %}">PC</a>
+                <a href="{% url 'report_abs' %}">Absenteeism</a>
+                <a href="{% url 'report_abs_se_without_ki' %}">Absenteeism SE</a>
+                <a href="{% url 'report_to' %}">Turnover</a>
+                <a href="{% url 'report_abs_comp' %}">Absenteeism Complete</a>
+                <a href="{% url 'report_actual_vs_budget' %}">Actual vs Budget</a>
+                <a href="#">|</a>
+                <a href="{% url 'analytics' %}">Analytics</a>
+                <a href="#">|</a>
+                <a href="{% url 'sendmail_index' %}">Send Mail</a>
+                {% endif %}
+                {% if user|has_group:"zucchetti" %}
+                <a href="#">|</a>
+                <a href="{% url 'zucchetti_sync' %}">Zucchetti</a>
+                {% endif %}
+                {% if user.is_authenticated %}
+                    <span style="color:var(--muted);padding:10px 4px;font-size:0.85rem;">{{ user.username }}</span>
+                    <form method="post" action="{% url 'logout' %}" style="display:inline">
+                        {% csrf_token %}
+                        <button type="submit" style="background:none;border:none;cursor:pointer;padding:10px 14px;border-radius:999px;color:var(--muted);font-family:inherit;font-size:inherit;">Logout</button>
+                    </form>
+                {% endif %}
+            </nav>
+        </header>
+
+        {% if messages %}
+            <section class="flash-stack">
+                {% for message in messages %}
+                    <div class="flash {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </section>
+        {% endif %}
+
+        <main class="page-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>
