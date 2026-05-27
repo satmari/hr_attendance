@@ -18,7 +18,7 @@ class EmailConfig(models.Model):
     app_base_url = models.CharField(
         max_length=255,
         blank=True,
-        help_text="Base URL of the HR Attendance app on the Gordon intranet, e.g. http://192.168.1.10:8010",
+        help_text="Base URL of the HR Attendance app, e.g. http://192.168.1.10:8010",
     )
     last_sent_month = models.PositiveSmallIntegerField(null=True, blank=True)
     last_sent_year = models.PositiveIntegerField(null=True, blank=True)

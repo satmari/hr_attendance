@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 blank=True,
                 max_length=255,
-                help_text="Base URL of the HR Attendance app on the Gordon intranet, e.g. http://192.168.1.10:8010",
+                help_text="Base URL of the HR Attendance app, e.g. http://192.168.1.10:8010",
             ),
         ),
     ]

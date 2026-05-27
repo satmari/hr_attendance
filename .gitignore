@@ -1,6 +1,7 @@
-# dot files and folders (except .gitignore itself)
+# dot files and folders (except .gitignore and .env.example)
 .*
 !.gitignore
+!.env.example
 
 # python
 __pycache__/
