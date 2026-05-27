@@ -13,6 +13,7 @@ staticfiles/
 media/
 
 # data files
+*.md
 *.xlsx
 *.xls
 *.csv
