@@ -1,14 +1,24 @@
-.venv/
+# dot files and folders (except .gitignore itself)
+.*
+!.gitignore
+
+# python
 __pycache__/
 *.pyc
 *.pyo
-*.log
-.log/
+
+# django
 db.sqlite3
-.env
 staticfiles/
 media/
+
+# data files
 *.xlsx
 *.xls
+*.csv
 *.pdf
 *.dat
+*.txt
+
+# env
+*.env
